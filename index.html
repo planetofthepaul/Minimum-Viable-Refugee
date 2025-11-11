@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Minimum Viable Refugee</title>
-<meta name="description" content="Minimum Viable Refugee — Enter your monthly take-home income and see how livable different cities are for a single person or two people, with 1BR/2BR rent and a clear monthly total." />
+<meta name="description" content="Enter monthly take-home income and see how livable cities are for a single or two-person household with 1BR/2BR rent and a clear monthly total." />
 <style>
   :root{
     --bg:#0b0e13; --surface:#0f1420; --text:#eaf1ff; --muted:#a9b3c7;
@@ -107,7 +107,7 @@
 </footer>
 
 <script>
-// ---------- Load cities.json from the same repo (GitHub Pages) ----------
+// ---------- Load cities.json ----------
 let CITIES = [];
 fetch('cities.json')
   .then(r => r.json())
@@ -122,14 +122,13 @@ fetch('cities.json')
 // ---------- State & helpers ----------
 const $ = s => document.querySelector(s);
 const money = x => `$${Math.round(x).toLocaleString()}`;
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop';
+const IMG_CACHE = new Map(); // key: "City|Country" -> url
 
 let household = "single"; // affects base total only
 let bedrooms  = "1";      // affects rent only
 
-/* Rent strictly follows bedroom selection */
-function currentRent(c){
-  return bedrooms === "1" ? c.rent1BR : c.rent2BR;
-}
+function currentRent(c){ return bedrooms === "1" ? c.rent1BR : c.rent2BR; }
 
 /* Adjusted total = BaseTotal − BaselineRent + SelectedRent
    Baselines:
@@ -143,7 +142,6 @@ function currentCost(c){
   return baseTotal - baselineRent + selectedRent;
 }
 
-/* Compute rows with % of income + surplus/deficit */
 function computeRows(){
   const income = +$("#income").value || 0;
   const q = ($("#search").value || "").trim().toLowerCase();
@@ -171,18 +169,52 @@ function computeRows(){
   return rows;
 }
 
-/* Build details breakdown that matches what's shown above */
+/* --- Robust image resolution ---
+   Priority:
+   1) c.image (if provided)
+   2) Wikipedia page summary for "City, Country"
+   3) Wikipedia page summary for "City"
+   4) FALLBACK_IMG
+*/
+async function resolveImageURL(city, country){
+  const key = `${city}|${country}`;
+  if(IMG_CACHE.has(key)) return IMG_CACHE.get(key);
+
+  // Helper to fetch a wiki summary and return thumbnail
+  async function wikiThumb(title){
+    try{
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+      const r = await fetch(url);
+      if(!r.ok) return null;
+      const j = await r.json();
+      // prefer originalimage if present, else thumbnail
+      const src = j.originalimage?.source || j.thumbnail?.source || null;
+      return src;
+    }catch(e){ return null; }
+  }
+
+  // try "City, Country"
+  let img = await wikiThumb(`${city}, ${country}`);
+  if(!img){
+    // try just "City"
+    img = await wikiThumb(city);
+  }
+  if(!img) img = FALLBACK_IMG;
+
+  IMG_CACHE.set(key, img);
+  return img;
+}
+
 function breakdownHTML(c){
   const total = c._cost;
   const rent = c._rent;
   const remaining = Math.max(0, total - rent);
 
-  // Split remaining across Food, Utilities, Transit, Other in 2:1:1:2 ratio
   const wFood=2, wUtil=1, wTran=1, wOther=2, wSum=6;
   const food   = Math.round(remaining * (wFood / wSum));
   const util   = Math.round(remaining * (wUtil / wSum));
   const tran   = Math.round(remaining * (wTran / wSum));
-  const other  = Math.max(0, total - (rent + food + util + tran)); // absorb rounding
+  const other  = Math.max(0, total - (rent + food + util + tran));
 
   return `
     <div class="mini" style="margin-bottom:6px">Breakdown (housing uses the actual rent above)</div>
@@ -196,14 +228,15 @@ function breakdownHTML(c){
   `;
 }
 
-/* Card UI */
 function card(c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
   const sd  = (c._surplus!=null) ? (c._surplus>=0 ? `Surplus ${money(c._surplus)}/mo` : `Deficit ${money(Math.abs(c._surplus))}/mo`) : "—";
+  // Note: set a temporary src; we'll resolve real one async after render
   return `
-  <article class="card" data-id="${c.id}" tabindex="0" aria-label="${c.city}, ${c.country}">
+  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" tabindex="0" aria-label="${c.city}, ${c.country}">
     <div class="img">
-      <img src="${c.image}" alt="${c.city}, ${c.country}" loading="lazy" decoding="async" />
+      <img src="${c.image ? c.image : FALLBACK_IMG}" alt="${c.city}, ${c.country}" loading="lazy" decoding="async"
+           onerror="this.onerror=null; this.src='${FALLBACK_IMG}';" />
       <div class="chip">${top}</div>
     </div>
     <div class="body">
@@ -233,11 +266,27 @@ function card(c){
   </article>`;
 }
 
+// After render, hydrate any images that lack an explicit link
+async function hydrateImages(){
+  const cards = Array.from(document.querySelectorAll('.card'));
+  await Promise.all(cards.map(async (el)=>{
+    const img = el.querySelector('img');
+    const hasExplicit = img.getAttribute('data-explicit') === 'true';
+    // If JSON provided c.image, we keep it (onerror already handled)
+    if (img && img.src && img.src !== FALLBACK_IMG) return;
+
+    const city = el.dataset.city, country = el.dataset.country;
+    const url = await resolveImageURL(city, country);
+    // Only replace if current is fallback (or empty)
+    if(img && (!img.src || img.src === FALLBACK_IMG)){
+      img.src = url || FALLBACK_IMG;
+    }
+  }));
+}
+
 /* Render — preserves open cards across updates */
 function render(){
   const app = $("#app");
-
-  // Remember open cards by data-id before re-render
   const openIDs = Array.from(document.querySelectorAll(".card.open")).map(c => c.dataset.id);
 
   const rows = computeRows();
@@ -254,6 +303,9 @@ function render(){
     const el = app.querySelector(`.card[data-id="${id}"]`);
     if (el) el.classList.add("open");
   });
+
+  // Resolve images (Wikipedia fallback) after cards exist
+  hydrateImages();
 }
 
 /* Toggle helpers */
