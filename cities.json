@@ -1,0 +1,24 @@
+[
+  {
+    "id": "1",
+    "city": "Chiang Mai",
+    "country": "Thailand",
+    "region": "Asia",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Chiang_Mai_Old_City.jpg",
+    "rent1BR": 400,
+    "rent2BR": 650,
+    "costOne": 1200,
+    "costTwo": 1900
+  },
+  {
+    "id": "2",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "region": "Europe",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Lisbon_Panorama.jpg",
+    "rent1BR": 1000,
+    "rent2BR": 1500,
+    "costOne": 2200,
+    "costTwo": 3200
+  }
+]
