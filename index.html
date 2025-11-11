@@ -21,7 +21,7 @@
   .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;padding:0 16px 14px}
   .f{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
   .f label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  .f input,.f select{width:100%;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:var(--text)}
+  .f input,.f select{width:100%;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#fff}
   .seg{display:flex;gap:8px}
   .seg button{flex:1;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#d7e6ff;cursor:pointer}
   .seg button[aria-pressed="true"]{background:#1a2742}
@@ -107,7 +107,7 @@
 </footer>
 
 <script>
-// ---------- Load cities.json ----------
+// ----------------- Data load -----------------
 let CITIES = [];
 fetch('cities.json')
   .then(r => r.json())
@@ -119,10 +119,18 @@ fetch('cities.json')
     document.querySelector('#summary').textContent = "Showing 0 cities";
   });
 
-// ---------- State & helpers ----------
+// ----------------- State & helpers -----------------
 const $ = s => document.querySelector(s);
 const money = x => `$${Math.round(x).toLocaleString()}`;
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop';
+
+// Neutral built-in SVG, never fails
+const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900">
+    <rect width="100%" height="100%" fill="#0e1526"/>
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          fill="#2a3654" font-family="system-ui, sans-serif" font-size="36">image unavailable</text>
+  </svg>
+`);
 const IMG_CACHE = new Map(); // key: "City|Country" -> url
 
 let household = "single"; // affects base total only
@@ -169,42 +177,57 @@ function computeRows(){
   return rows;
 }
 
-/* --- Robust image resolution ---
-   Priority:
-   1) c.image (if provided)
-   2) Wikipedia page summary for "City, Country"
-   3) Wikipedia page summary for "City"
-   4) FALLBACK_IMG
-*/
-async function resolveImageURL(city, country){
+// ----------------- Image resolution (Wikipedia Action API, CORS-safe) -----------------
+async function wikiThumbActionAPI(title){
+  // robust, works on GitHub Pages (origin=*)
+  const url = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original|thumbnail&pithumbsize=1280&titles=${encodeURIComponent(title)}&origin=*`;
+  const r = await fetch(url);
+  if(!r.ok) return null;
+  const j = await r.json();
+  const pages = j?.query?.pages || {};
+  const first = Object.values(pages)[0];
+  if(!first) return null;
+  return first.original?.source || first.thumbnail?.source || null;
+}
+
+async function resolveCityImage(city, country, explicit){
+  // If cities.json provides c.image, use it directly
+  if (explicit) return explicit;
+
   const key = `${city}|${country}`;
   if(IMG_CACHE.has(key)) return IMG_CACHE.get(key);
 
-  // Helper to fetch a wiki summary and return thumbnail
-  async function wikiThumb(title){
-    try{
-      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-      const r = await fetch(url);
-      if(!r.ok) return null;
-      const j = await r.json();
-      // prefer originalimage if present, else thumbnail
-      const src = j.originalimage?.source || j.thumbnail?.source || null;
-      return src;
-    }catch(e){ return null; }
-  }
+  // Try "City, Country" first, then just "City"
+  let src = await wikiThumbActionAPI(`${city}, ${country}`);
+  if(!src) src = await wikiThumbActionAPI(city);
+  if(!src) src = FALLBACK_IMG;
 
-  // try "City, Country"
-  let img = await wikiThumb(`${city}, ${country}`);
-  if(!img){
-    // try just "City"
-    img = await wikiThumb(city);
-  }
-  if(!img) img = FALLBACK_IMG;
-
-  IMG_CACHE.set(key, img);
-  return img;
+  IMG_CACHE.set(key, src);
+  return src;
 }
 
+async function hydrateImages(){
+  const cards = Array.from(document.querySelectorAll('.card'));
+  for (const el of cards){
+    const img = el.querySelector('img[data-loaded="false"]');
+    if(!img) continue; // already done
+
+    const city = el.dataset.city;
+    const country = el.dataset.country;
+    const explicit = el.dataset.explicit && el.dataset.explicit !== 'null' ? el.dataset.explicit : null;
+
+    try{
+      const src = await resolveCityImage(city, country, explicit);
+      img.src = src || FALLBACK_IMG;
+    }catch(e){
+      img.src = FALLBACK_IMG;
+    }
+    img.setAttribute('data-loaded','true');
+    img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
+  }
+}
+
+// ----------------- UI rendering -----------------
 function breakdownHTML(c){
   const total = c._cost;
   const rent = c._rent;
@@ -231,12 +254,13 @@ function breakdownHTML(c){
 function card(c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
   const sd  = (c._surplus!=null) ? (c._surplus>=0 ? `Surplus ${money(c._surplus)}/mo` : `Deficit ${money(Math.abs(c._surplus))}/mo`) : "—";
-  // Note: set a temporary src; we'll resolve real one async after render
+  const explicitImg = c.image ? c.image : ""; // pass to dataset for resolver
+
   return `
-  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" tabindex="0" aria-label="${c.city}, ${c.country}">
+  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" data-explicit="${explicitImg}" tabindex="0" aria-label="${c.city}, ${c.country}">
     <div class="img">
-      <img src="${c.image ? c.image : FALLBACK_IMG}" alt="${c.city}, ${c.country}" loading="lazy" decoding="async"
-           onerror="this.onerror=null; this.src='${FALLBACK_IMG}';" />
+      <!-- No initial src; we resolve per-card after render -->
+      <img alt="${c.city}, ${c.country}" loading="lazy" decoding="async" data-loaded="false" />
       <div class="chip">${top}</div>
     </div>
     <div class="body">
@@ -266,25 +290,6 @@ function card(c){
   </article>`;
 }
 
-// After render, hydrate any images that lack an explicit link
-async function hydrateImages(){
-  const cards = Array.from(document.querySelectorAll('.card'));
-  await Promise.all(cards.map(async (el)=>{
-    const img = el.querySelector('img');
-    const hasExplicit = img.getAttribute('data-explicit') === 'true';
-    // If JSON provided c.image, we keep it (onerror already handled)
-    if (img && img.src && img.src !== FALLBACK_IMG) return;
-
-    const city = el.dataset.city, country = el.dataset.country;
-    const url = await resolveImageURL(city, country);
-    // Only replace if current is fallback (or empty)
-    if(img && (!img.src || img.src === FALLBACK_IMG)){
-      img.src = url || FALLBACK_IMG;
-    }
-  }));
-}
-
-/* Render — preserves open cards across updates */
 function render(){
   const app = $("#app");
   const openIDs = Array.from(document.querySelectorAll(".card.open")).map(c => c.dataset.id);
@@ -298,31 +303,16 @@ function render(){
   app.innerHTML = `<section class="grid">${rows.map(card).join("")}</section>`;
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
 
-  // Restore open state
   openIDs.forEach(id => {
     const el = app.querySelector(`.card[data-id="${id}"]`);
     if (el) el.classList.add("open");
   });
 
-  // Resolve images (Wikipedia fallback) after cards exist
+  // Resolve images AFTER cards exist
   hydrateImages();
 }
 
-/* Toggle helpers */
-function setHousehold(next){
-  household = next;
-  $("#btnSingle").setAttribute("aria-pressed", String(next==="single"));
-  $("#btnTwo").setAttribute("aria-pressed", String(next==="two"));
-  render();
-}
-function setBedrooms(next){
-  bedrooms = next;
-  $("#btn1BR").setAttribute("aria-pressed", String(next==="1"));
-  $("#btn2BR").setAttribute("aria-pressed", String(next==="2"));
-  render();
-}
-
-/* Events */
+// ----------------- Events -----------------
 window.addEventListener("click", (e)=>{
   const card = e.target.closest(".card");
   if(card){ card.classList.toggle("open"); }
@@ -332,12 +322,32 @@ window.addEventListener("click", (e)=>{
   el.addEventListener("input", render);
   el.addEventListener("change", render);
 });
-$("#btnSingle").addEventListener("click", ()=> setHousehold("single"));
-$("#btnTwo").addEventListener("click",   ()=> setHousehold("two"));
-$("#btn1BR").addEventListener("click",   ()=> setBedrooms("1"));
-$("#btn2BR").addEventListener("click",   ()=> setBedrooms("2"));
+$("#btnSingle").addEventListener("click", ()=> {
+  household="single";
+  $("#btnSingle").setAttribute("aria-pressed","true");
+  $("#btnTwo").setAttribute("aria-pressed","false");
+  render();
+});
+$("#btnTwo").addEventListener("click", ()=> {
+  household="two";
+  $("#btnSingle").setAttribute("aria-pressed","false");
+  $("#btnTwo").setAttribute("aria-pressed","true");
+  render();
+});
+$("#btn1BR").addEventListener("click", ()=> {
+  bedrooms="1";
+  $("#btn1BR").setAttribute("aria-pressed","true");
+  $("#btn2BR").setAttribute("aria-pressed","false");
+  render();
+});
+$("#btn2BR").addEventListener("click", ()=> {
+  bedrooms="2";
+  $("#btn1BR").setAttribute("aria-pressed","false");
+  $("#btn2BR").setAttribute("aria-pressed","true");
+  render();
+});
 
-/* Keyboard: Enter toggles card, '/' focuses search */
+// Keyboard helpers
 document.addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
     const card = document.activeElement.closest?.(".card");
