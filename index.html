@@ -256,11 +256,16 @@ function card(c){
   const sd  = (c._surplus!=null) ? (c._surplus>=0 ? `Surplus ${money(c._surplus)}/mo` : `Deficit ${money(Math.abs(c._surplus))}/mo`) : "—";
   const explicitImg = c.image ? c.image : ""; // pass to dataset for resolver
 
+  // Check if image is already cached
+  const key = `${c.city}|${c.country}`;
+  const cachedImg = IMG_CACHE.get(key);
+  const imgSrc = cachedImg || '';
+  const dataLoaded = cachedImg ? 'true' : 'false';
+
   return `
   <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" data-explicit="${explicitImg}" tabindex="0" aria-label="${c.city}, ${c.country}">
     <div class="img">
-      <!-- No initial src; we resolve per-card after render -->
-      <img alt="${c.city}, ${c.country}" loading="lazy" decoding="async" data-loaded="false" />
+      <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" data-loaded="${dataLoaded}" />
       <div class="chip">${top}</div>
     </div>
     <div class="body">
@@ -308,7 +313,7 @@ function render(){
     if (el) el.classList.add("open");
   });
 
-  // Resolve images AFTER cards exist
+  // Resolve images AFTER cards exist (only for unloaded images)
   hydrateImages();
 }
 
