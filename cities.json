@@ -825,17 +825,6 @@
     "costTwo": 2000
   },
   {
-    "id": "chiang-mai-th",
-    "city": "Chiang Mai",
-    "country": "Thailand",
-    "region": "Asia",
-    "image": null,
-    "rent1BR": 380,
-    "rent2BR": 600,
-    "costOne": 1000,
-    "costTwo": 1600
-  },
-  {
     "id": "phuket-th",
     "city": "Phuket",
     "country": "Thailand",
