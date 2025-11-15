@@ -297,12 +297,10 @@
 
     <div class="f" style="grid-column:span 4">
       <label for="sort">Sort</label>
-      <select id="sort">
-        <option value="pctAsc">% of income ↑</option>
-        <option value="pctDesc">% of income ↓</option>
-        <option value="costAsc">Monthly cost ↑</option>
-        <option value="costDesc">Monthly cost ↓</option>
-      </select>
+     <select id="sort">
+  <option value="costAsc">Lowest total cost</option>
+  <option value="costDesc">Highest total cost</option>
+</select>
     </div>
 
     <!-- Bottom full-width hide/show filters button -->
@@ -379,8 +377,6 @@ function computeRows(){
 
   const sort = $("#sort").value;
   const sorters = {
-    pctAsc: (a,b)=> (a._pct??Infinity) - (b._pct??Infinity),
-    pctDesc:(a,b)=> (b._pct??-Infinity) - (a._pct??-Infinity),
     costAsc:(a,b)=> a._cost - b._cost,
     costDesc:(a,b)=> b._cost - a._cost
   };
