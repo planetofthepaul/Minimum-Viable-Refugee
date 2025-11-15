@@ -5,28 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <!-- Primary Meta Tags -->
-<title>Minimum Viable Refugee - Compare Cost of Living in 170+ Cities Worldwide</title>
-<meta name="title" content="Minimum Viable Refugee - Compare Cost of Living in 170+ Cities Worldwide" />
+<title>Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide</title>
+<meta name="title" content="Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide" />
 <meta name="description" content="Calculate how livable cities are based on your income. Compare rent, living costs, and affordability across 170+ cities worldwide for singles and couples." />
 <meta name="keywords" content="cost of living, city comparison, rent calculator, expat, digital nomad, relocation, affordable cities, living expenses" />
-<meta name="author" content="Minimum Viable Refugee" />
+<meta name="author" content="Minimum Viable Expat" />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://yoursite.com/" />
-<meta property="og:title" content="Minimum Viable Refugee - Compare Cost of Living in 170+ Cities" />
+<meta property="og:url" content="https://minimumviableexpat.com/" />
+<meta property="og:title" content="Minimum Viable Expat - Compare Cost of Living in 170+ Cities" />
 <meta property="og:description" content="Calculate how livable cities are based on your income. Compare rent and living costs across 170+ cities worldwide." />
-<meta property="og:image" content="https://yoursite.com/og-image.jpg" />
+<meta property="og:image" content="https://minimumviableexpat.com/og-image.jpg" />
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://yoursite.com/" />
-<meta property="twitter:title" content="Minimum Viable Refugee - Compare Cost of Living" />
+<meta property="twitter:url" content="https://minimumviableexpat.com/" />
+<meta property="twitter:title" content="Minimum Viable Expat - Compare Cost of Living" />
 <meta property="twitter:description" content="Calculate how livable cities are based on your income. Compare 170+ cities worldwide." />
-<meta property="twitter:image" content="https://yoursite.com/og-image.jpg" />
+<meta property="twitter:image" content="https://minimumviableexpat.com/og-image.jpg" />
 
 <!-- Canonical URL -->
-<link rel="canonical" href="https://yoursite.com/" />
+<link rel="canonical" href="https://minimumviableexpat.com/" />
 
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛑️</text></svg>" />
@@ -48,7 +48,25 @@
   .nav a{color:var(--muted);text-decoration:none;transition:color 0.2s}
   .nav a:hover{color:var(--text)}
   .badge{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;color:#061018}
+
+  .filter-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #22324d;
+    background:#0c121f;
+    color:var(--muted);
+    cursor:pointer;
+    margin-left:12px;
+    white-space:nowrap;
+  }
+
   .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;padding:0 16px 14px}
+  .controls.is-hidden{display:none;}
+
   .f{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
   .f label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
   .f input,.f select{width:100%;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#fff}
@@ -75,8 +93,28 @@
   footer{position:sticky;bottom:0;background:linear-gradient(0deg,rgba(11,14,19,.98),rgba(11,14,19,.6));border-top:1px solid var(--line)}
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
   .sum{font-size:13px;color:var(--muted)}
-  @media (max-width:1024px){ .grid{grid-template-columns:repeat(2,1fr)} .f{grid-column:span 6} }
-  @media (max-width:680px){ .grid{grid-template-columns:1fr} .f{grid-column:span 12} .rows{grid-template-columns:1fr} .nav{display:none} }
+
+  @media (max-width:1024px){
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .f{grid-column:span 6}
+  }
+
+  @media (max-width:680px){
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .f{grid-column:span 12}
+
+    .body{padding:8px}
+    .title h3{font-size:14px}
+    .title .mini{display:none}
+    .rows{grid-template-columns:1fr}
+    /* Hide second row (rent) */
+    .rows .row:nth-child(2){display:none}
+    /* Hide labels so it's just the cost value */
+    .rows .row .k{display:none}
+    /* Never show the expandable breakdown on small screens */
+    .card .details{display:none !important}
+    .chip{font-size:10px;padding:4px 8px}
+  }
 </style>
 
 <!-- Schema.org structured data for SEO -->
@@ -84,7 +122,7 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "Minimum Viable Refugee",
+  "name": "Minimum Viable Expat",
   "applicationCategory": "FinanceApplication",
   "description": "Calculate and compare cost of living across 170+ cities worldwide based on your income.",
   "offers": {
@@ -102,12 +140,17 @@
       <a href="/">
         <div class="badge">⛑️</div>
       </a>
-      <a href="/">Minimum Viable Refugee</a>
+      <a href="/">Minimum Viable Expat</a>
     </div>
-    <nav class="nav">
-      <a href="https://planetofthepaul.github.io/Minimum-Viable-Refugee/about.html">About</a>
-      <a href="https://planetofthepaul.github.io/Minimum-Viable-Refugee/terms.html">Terms</a>
-    </nav>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <nav class="nav">
+        <a href="https://minimumviableexpat.com/about">About</a>
+        <a href="https://minimumviableexpat.com/terms">Terms</a>
+      </nav>
+      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="true">
+        Hide filters
+      </button>
+    </div>
   </div>
 
   <div class="controls wrap" role="region" aria-label="Controls">
@@ -401,6 +444,16 @@ document.addEventListener("keydown", (e)=>{
   if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
     e.preventDefault(); $("#search").focus();
   }
+});
+
+// Filter toggle (all devices, text = Hide/Show filters)
+const controlsEl = document.querySelector('.controls');
+const filterToggleBtn = document.getElementById('filterToggle');
+
+filterToggleBtn.addEventListener('click', () => {
+  const hidden = controlsEl.classList.toggle('is-hidden');
+  filterToggleBtn.setAttribute('aria-expanded', String(!hidden));
+  filterToggleBtn.textContent = hidden ? 'Show filters' : 'Hide filters';
 });
 </script>
 </body>
