@@ -40,8 +40,8 @@
     "image": null,
     "rent1BR": 2400,
     "rent2BR": 3600,
-    "costOne": 5000,
-    "costTwo": 7800
+    "costOne": 4300,
+    "costTwo": 7100
   },
   {
     "id": "san-francisco-us",
@@ -1569,8 +1569,8 @@
     "image": null,
     "rent1BR": 2600,
     "rent2BR": 3400,
-    "costOne": 5200,
-    "costTwo": 8000
+    "costOne": 4800,
+    "costTwo": 7900
   },
   {
     "id": "philadelphia-us",
@@ -1591,8 +1591,8 @@
     "image": null,
     "rent1BR": 2600,
     "rent2BR": 3400,
-    "costOne": 3600,
-    "costTwo": 5600
+    "costOne": 4800,
+    "costTwo": 6900
   },
   {
     "id": "san-diego-us",
@@ -1612,9 +1612,9 @@
     "region": "North America",
     "image": null,
     "rent1BR": 3100,
-    "rent2BR": 4500,
-    "costOne": 5400,
-    "costTwo": 8000
+    "rent2BR": 4100,
+    "costOne": 4500,
+    "costTwo": 7900
   },
   {
     "id": "sacramento-us",
