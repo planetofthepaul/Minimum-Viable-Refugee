@@ -441,7 +441,7 @@ function breakdownHTML(c){
   const tran   = Math.round(remaining * (wTran / wSum));
   const other  = Math.max(0, total - (rent + food + util + tran));
 
-  return `
+ return `
     <div class="mini">Breakdown (housing uses the actual rent above)</div>
     <div class="rows">
       <div class="row"><div class="k">Housing (rent)</div><div class="v">${money(rent)}/mo</div></div>
@@ -449,6 +449,12 @@ function breakdownHTML(c){
       <div class="row"><div class="k">Utilities</div><div class="v">${money(util)}/mo</div></div>
       <div class="row"><div class="k">Transit</div><div class="v">${money(tran)}/mo</div></div>
       <div class="row"><div class="k">Other</div><div class="v">${money(other)}/mo</div></div>
+    </div>
+
+    <div class="wiki" style="margin-top:12px;">
+      <a href="https://wikipedia.org/wiki/${encodeURIComponent(c.city)}" target="_blank" rel="noopener" style="color:#6aa8ff;">
+        View on Wikipedia →
+      </a>
     </div>
   `;
 }
