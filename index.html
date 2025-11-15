@@ -52,16 +52,27 @@
   .filter-toggle{
     display:flex;
     align-items:center;
+    justify-content:center;
     gap:6px;
     font-size:13px;
-    padding:6px 10px;
+    padding:6px 12px;
     border-radius:999px;
     border:1px solid #22324d;
     background:#0c121f;
     color:var(--muted);
     cursor:pointer;
-    margin-left:12px;
     white-space:nowrap;
+  }
+  .filter-toggle-main{
+    margin-left:12px;
+  }
+  .filter-toggle-bottom{
+    width:100%;
+    margin-top:6px;
+    background:#182033;
+    color:#eaf1ff;
+    border-color:#2b3a5a;
+    font-weight:600;
   }
 
   .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;padding:0 16px 14px}
@@ -82,6 +93,7 @@
   .seg button{flex:1;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#d7e6ff;cursor:pointer}
   .seg button[aria-pressed="true"]{background:#1a2742}
   .mini{font-size:12px;color:var(--muted)}
+
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 0 70px}
   .card{
     background:var(--card);
@@ -103,6 +115,7 @@
   .row{background:#0c121f;border:1px solid #1b2742;border-radius:10px;padding:10px}
   .k{font-size:12px;color:var(--muted)}
   .v{margin-top:4px;font-weight:700}
+
   .details{
     display:none;
     border-top:1px solid #1b2742;
@@ -133,6 +146,7 @@
     margin-right:6px;
     margin-bottom:6px;
   }
+
   .empty{padding:40px;text-align:center;color:var(--muted);border:1px dashed #2a3654;border-radius:12px;background:#0c121f}
   footer{position:sticky;bottom:0;background:linear-gradient(0deg,rgba(11,14,19,.98),rgba(11,14,19,.6));border-top:1px solid var(--line)}
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -151,7 +165,7 @@
     .title h3{font-size:14px}
     .title .mini{display:none}
 
-    /* Compact top summary rows only (not breakdown) */
+    /* Compact top summary rows ONLY (not breakdown) */
     .card > .body > .rows{
       grid-template-columns:1fr;
       gap:8px;
@@ -167,14 +181,14 @@
       font-size:14px;
     }
 
-    /* Expanded details: full-width, readable, not cut off */
+    /* Expanded details: stacked, readable */
     .card .details{
       padding-top:10px;
       margin-top:10px;
       font-size:13px;
     }
     .card .details .rows{
-      grid-template-columns:1fr; /* stack breakdown items vertically */
+      grid-template-columns:1fr;
       gap:8px;
       margin-top:8px;
     }
@@ -228,7 +242,7 @@
         <a href="https://minimumviableexpat.com/about">About</a>
         <a href="https://minimumviableexpat.com/terms">Terms</a>
       </nav>
-      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="true">
+      <button class="filter-toggle filter-toggle-main" id="filterToggleTop" type="button" aria-expanded="true">
         Hide filters
       </button>
     </div>
@@ -272,6 +286,13 @@
         <option value="costAsc">Monthly cost ↑</option>
         <option value="costDesc">Monthly cost ↓</option>
       </select>
+    </div>
+
+    <!-- Bottom full-width hide/show filters button -->
+    <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;">
+      <button class="filter-toggle filter-toggle-bottom" id="filterToggleBottom" type="button" aria-expanded="true">
+        Hide filters
+      </button>
     </div>
   </div>
 </header>
@@ -483,9 +504,29 @@ function render(){
   hydrateImages();
 }
 
+// --- Row-based expansion: expand/collapse all cards in same visual row ---
+function toggleRowCards(cardEl){
+  const grid = cardEl.closest('.grid');
+  if(!grid){
+    cardEl.classList.toggle('open');
+    return;
+  }
+
+  const cards = Array.from(grid.querySelectorAll('.card'));
+  const clickedTop = cardEl.offsetTop;
+  const isOpening = !cardEl.classList.contains('open');
+
+  cards.forEach(c => {
+    if (Math.abs(c.offsetTop - clickedTop) < 5) {
+      // same visual row (within a few pixels)
+      c.classList.toggle('open', isOpening);
+    }
+  });
+}
+
 window.addEventListener("click", (e)=>{
   const cardEl = e.target.closest(".card");
-  if(cardEl){ cardEl.classList.toggle("open"); }
+  if(cardEl){ toggleRowCards(cardEl); }
 });
 ["income","search","sort"].forEach(id=>{
   const el = $("#"+id);
@@ -520,21 +561,35 @@ $("#btn2BR").addEventListener("click", ()=> {
 document.addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
     const cardEl = document.activeElement.closest?.(".card");
-    if(cardEl){ e.preventDefault(); cardEl.classList.toggle("open"); }
+    if(cardEl){ e.preventDefault(); toggleRowCards(cardEl); }
   }
   if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
     e.preventDefault(); $("#search").focus();
   }
 });
 
-// Filter toggle (all devices, text = Hide/Show filters)
+// --- Filter toggles: top pill + bottom button, synced ---
 const controlsEl = document.querySelector('.controls');
-const filterToggleBtn = document.getElementById('filterToggle');
+const filterBtnTop = document.getElementById('filterToggleTop');
+const filterBtnBottom = document.getElementById('filterToggleBottom');
 
-filterToggleBtn.addEventListener('click', () => {
-  const hidden = controlsEl.classList.toggle('is-hidden');
-  filterToggleBtn.setAttribute('aria-expanded', String(!hidden));
-  filterToggleBtn.textContent = hidden ? 'Show filters' : 'Hide filters';
+function setFilterHidden(hidden){
+  controlsEl.classList.toggle('is-hidden', hidden);
+  const label = hidden ? 'Show filters' : 'Hide filters';
+  [filterBtnTop, filterBtnBottom].forEach(btn => {
+    if(!btn) return;
+    btn.textContent = label;
+    btn.setAttribute('aria-expanded', String(!hidden));
+  });
+}
+
+filterBtnTop.addEventListener('click', () => {
+  const currentlyHidden = controlsEl.classList.contains('is-hidden');
+  setFilterHidden(!currentlyHidden);
+});
+filterBtnBottom.addEventListener('click', () => {
+  const currentlyHidden = controlsEl.classList.contains('is-hidden');
+  setFilterHidden(!currentlyHidden);
 });
 </script>
 </body>
