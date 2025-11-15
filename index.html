@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 
 <!-- Primary Meta Tags -->
 <title>Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide</title>
@@ -69,7 +69,15 @@
 
   .f{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
   .f label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  .f input,.f select{width:100%;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#fff}
+  .f input,.f select{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #22324d;
+    background:#0c121f;
+    color:#fff;
+    font-size:16px; /* prevent mobile zoom */
+  }
   .seg{display:flex;gap:8px}
   .seg button{flex:1;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#d7e6ff;cursor:pointer}
   .seg button[aria-pressed="true"]{background:#1a2742}
@@ -106,13 +114,18 @@
     .body{padding:8px}
     .title h3{font-size:14px}
     .title .mini{display:none}
-    .rows{grid-template-columns:1fr}
-    /* Hide second row (rent) */
-    .rows .row:nth-child(2){display:none}
-    /* Hide labels so it's just the cost value */
-    .rows .row .k{display:none}
-    /* Never show the expandable breakdown on small screens */
-    .card .details{display:none !important}
+
+    /* Only affect the top summary rows, not the breakdown in .details */
+    .card > .body > .rows{
+      grid-template-columns:1fr;
+    }
+    .card > .body > .rows .row:nth-child(2){
+      display:none; /* hide rent row in compact view */
+    }
+    .card > .body > .rows .row .k{
+      display:none; /* hide labels so it's just the cost value */
+    }
+
     .chip{font-size:10px;padding:4px 8px}
   }
 </style>
@@ -403,8 +416,8 @@ function render(){
 }
 
 window.addEventListener("click", (e)=>{
-  const card = e.target.closest(".card");
-  if(card){ card.classList.toggle("open"); }
+  const cardEl = e.target.closest(".card");
+  if(cardEl){ cardEl.classList.toggle("open"); }
 });
 ["income","search","sort"].forEach(id=>{
   const el = $("#"+id);
@@ -438,8 +451,8 @@ $("#btn2BR").addEventListener("click", ()=> {
 
 document.addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
-    const card = document.activeElement.closest?.(".card");
-    if(card){ e.preventDefault(); card.classList.toggle("open"); }
+    const cardEl = document.activeElement.closest?.(".card");
+    if(cardEl){ e.preventDefault(); cardEl.classList.toggle("open"); }
   }
   if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
     e.preventDefault(); $("#search").focus();
