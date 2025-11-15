@@ -46,7 +46,7 @@
   .nav{display:flex;gap:16px;font-size:14px}
   .nav a{color:var(--muted);text-decoration:none;transition:color 0.2s}
   .nav a:hover{color:var(--text)}
-   .badge{
+  .badge{
     width:26px;
     height:26px;
     border-radius:6px;
@@ -162,6 +162,21 @@
     margin-bottom:6px;
   }
 
+  .city-links{
+    margin-top:10px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .city-links a{
+    font-size:13px;
+    color:var(--brand);
+    text-decoration:none;
+  }
+  .city-links a:hover{
+    text-decoration:underline;
+  }
+
   .empty{padding:40px;text-align:center;color:var(--muted);border:1px dashed #2a3654;border-radius:12px;background:#0c121f}
   footer{position:sticky;bottom:0;background:linear-gradient(0deg,rgba(11,14,19,.98),rgba(11,14,19,.6));border-top:1px solid var(--line)}
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -248,9 +263,9 @@
   <div class="h-row wrap">
     <div class="brand">
       <a href="/">
-       <div class="badge">
-  <img src="logo-mve.png" alt="Minimum Viable Expat logo" class="badge-img">
-</div>
+        <div class="badge">
+          <img src="logo-mve.png" alt="Minimum Viable Expat logo" class="badge-img">
+        </div>
       </a>
       <a href="/">Minimum Viable Expat</a>
     </div>
@@ -297,10 +312,10 @@
 
     <div class="f" style="grid-column:span 4">
       <label for="sort">Sort</label>
-     <select id="sort">
-  <option value="costAsc">Lowest total cost</option>
-  <option value="costDesc">Highest total cost</option>
-</select>
+      <select id="sort">
+        <option value="costAsc">Lowest total cost</option>
+        <option value="costDesc">Highest total cost</option>
+      </select>
     </div>
 
     <!-- Bottom full-width hide/show filters button -->
@@ -380,7 +395,7 @@ function computeRows(){
     costAsc:(a,b)=> a._cost - b._cost,
     costDesc:(a,b)=> b._cost - a._cost
   };
-  rows.sort(sorters[sort] || sorters.pctAsc);
+  rows.sort(sorters[sort] || sorters.costAsc);
   return rows;
 }
 
@@ -441,22 +456,15 @@ function breakdownHTML(c){
   const tran   = Math.round(remaining * (wTran / wSum));
   const other  = Math.max(0, total - (rent + food + util + tran));
 
- return `
-   <div class="wiki" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;font-size:13px;">
-
-  <!-- Wikipedia -->
-  <a href="https://wikipedia.org/wiki/${encodeURIComponent(c.city)}"
-     target="_blank" rel="noopener" style="color:#6aa8ff;">
-    Wikipedia →
-  </a>
-
-  <!-- Google Maps -->
-  <a href="https://www.google.com/maps/search/${encodeURIComponent(c.city + ', ' + c.country)}"
-     target="_blank" rel="noopener" style="color:#8cffd1;">
-    Open in Google Maps →
-  </a>
-
-</div>
+  return `
+    <div class="mini">Breakdown (housing uses the actual rent above)</div>
+    <div class="rows">
+      <div class="row"><div class="k">Housing (rent)</div><div class="v">${money(rent)}/mo</div></div>
+      <div class="row"><div class="k">Food</div><div class="v">${money(food)}/mo</div></div>
+      <div class="row"><div class="k">Utilities</div><div class="v">${money(util)}/mo</div></div>
+      <div class="row"><div class="k">Transit</div><div class="v">${money(tran)}/mo</div></div>
+      <div class="row"><div class="k">Other</div><div class="v">${money(other)}/mo</div></div>
+    </div>
   `;
 }
 
@@ -497,6 +505,20 @@ function card(c){
           <span class="pill">Household: ${household==="single"?"Single":"Two"}</span>
           <span class="pill">Bedrooms: ${bedrooms}</span>
           <span class="pill">${sd}</span>
+        </div>
+        <div class="city-links">
+          <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(
+            c.city.replace(/ /g, "_")
+          )}"
+             target="_blank" rel="noopener">
+            Open Wikipedia
+          </a>
+          <a href="https://www.google.com/maps/search/${encodeURIComponent(
+            c.city + ', ' + c.country
+          )}"
+             target="_blank" rel="noopener">
+            Open Google Maps
+          </a>
         </div>
       </div>
     </div>
