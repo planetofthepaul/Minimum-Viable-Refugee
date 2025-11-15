@@ -83,20 +83,56 @@
   .seg button[aria-pressed="true"]{background:#1a2742}
   .mini{font-size:12px;color:var(--muted)}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 0 70px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+  }
   .img{aspect-ratio:16/9;background:#0e1526;position:relative}
   .img img{width:100%;height:100%;object-fit:cover;display:block}
   .chip{position:absolute;left:10px;top:10px;background:rgba(10,16,28,.8);border:1px solid #1f2b46;border-radius:999px;padding:6px 10px;font-size:12px}
   .body{padding:14px}
-  .title{display:flex;align-items:center;justify-content:space-between}
+  .title{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .title h3{margin:0;font-size:18px}
   .rows{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
   .row{background:#0c121f;border:1px solid #1b2742;border-radius:10px;padding:10px}
   .k{font-size:12px;color:var(--muted)}
   .v{margin-top:4px;font-weight:700}
-  .details{display:none;border-top:1px solid #1b2742;margin-top:12px;padding-top:12px}
+  .details{
+    display:none;
+    border-top:1px solid #1b2742;
+    margin-top:12px;
+    padding-top:12px;
+    font-size:13px;
+    line-height:1.4;
+  }
   .card.open .details{display:block}
-  .pill{display:inline-block;background:var(--chip);border:1px solid #223055;border-radius:999px;padding:6px 10px;font-size:12px;margin-right:6px;margin-bottom:6px}
+  .details .mini{font-size:11px;margin-bottom:6px}
+  .details .rows{
+    margin-top:6px;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .details .row{
+    padding:8px 10px;
+  }
+  .details .k{font-size:11px}
+  .details .v{font-size:13px;margin-top:2px}
+  .pill{
+    display:inline-block;
+    background:var(--chip);
+    border:1px solid #223055;
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:12px;
+    margin-right:6px;
+    margin-bottom:6px;
+  }
   .empty{padding:40px;text-align:center;color:var(--muted);border:1px dashed #2a3654;border-radius:12px;background:#0c121f}
   footer{position:sticky;bottom:0;background:linear-gradient(0deg,rgba(11,14,19,.98),rgba(11,14,19,.6));border-top:1px solid var(--line)}
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -111,19 +147,51 @@
     .grid{grid-template-columns:repeat(2,1fr)}
     .f{grid-column:span 12}
 
-    .body{padding:8px}
+    .body{padding:10px}
     .title h3{font-size:14px}
     .title .mini{display:none}
 
-    /* Only affect the top summary rows, not the breakdown in .details */
+    /* Compact top summary rows only (not breakdown) */
     .card > .body > .rows{
       grid-template-columns:1fr;
+      gap:8px;
+      margin-top:8px;
     }
     .card > .body > .rows .row:nth-child(2){
-      display:none; /* hide rent row in compact view */
+      display:none; /* hide rent row to keep card focused on monthly cost */
     }
     .card > .body > .rows .row .k{
-      display:none; /* hide labels so it's just the cost value */
+      display:none; /* hide label, leave just the value */
+    }
+    .card > .body > .rows .row .v{
+      font-size:14px;
+    }
+
+    /* Expanded details: full-width, readable, not cut off */
+    .card .details{
+      padding-top:10px;
+      margin-top:10px;
+      font-size:13px;
+    }
+    .card .details .rows{
+      grid-template-columns:1fr; /* stack breakdown items vertically */
+      gap:8px;
+      margin-top:8px;
+    }
+    .card .details .row{
+      padding:8px 10px;
+    }
+    .card .details .k{
+      display:block;
+      font-size:11px;
+    }
+    .card .details .v{
+      margin-top:2px;
+      font-size:13px;
+    }
+    .pill{
+      font-size:11px;
+      padding:5px 9px;
     }
 
     .chip{font-size:10px;padding:4px 8px}
@@ -340,8 +408,8 @@ function breakdownHTML(c){
   const other  = Math.max(0, total - (rent + food + util + tran));
 
   return `
-    <div class="mini" style="margin-bottom:6px">Breakdown (housing uses the actual rent above)</div>
-    <div class="rows" style="margin-top:0">
+    <div class="mini">Breakdown (housing uses the actual rent above)</div>
+    <div class="rows">
       <div class="row"><div class="k">Housing (rent)</div><div class="v">${money(rent)}/mo</div></div>
       <div class="row"><div class="k">Food</div><div class="v">${money(food)}/mo</div></div>
       <div class="row"><div class="k">Utilities</div><div class="v">${money(util)}/mo</div></div>
