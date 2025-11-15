@@ -27,10 +27,10 @@
     "country": "USA",
     "region": "North America",
     "image": null,
-    "rent1BR": 3300,
-    "rent2BR": 4300,
-    "costOne": 4400,
-    "costTwo": 7000
+    "rent1BR": 3800,
+    "rent2BR": 5200,
+    "costOne": 6200,
+    "costTwo": 9500
   },
   {
     "id": "los-angeles-us",
@@ -38,10 +38,10 @@
     "country": "USA",
     "region": "North America",
     "image": null,
-    "rent1BR": 2600,
-    "rent2BR": 3400,
-    "costOne": 3600,
-    "costTwo": 5600
+    "rent1BR": 2400,
+    "rent2BR": 3600,
+    "costOne": 5000,
+    "costTwo": 7800
   },
   {
     "id": "san-francisco-us",
@@ -49,10 +49,10 @@
     "country": "USA",
     "region": "North America",
     "image": null,
-    "rent1BR": 3200,
-    "rent2BR": 4100,
-    "costOne": 4300,
-    "costTwo": 6800
+    "rent1BR": 3400,
+    "rent2BR": 4700,
+    "costOne": 5800,
+    "costTwo": 8500
   },
   {
     "id": "seattle-us",
@@ -204,9 +204,9 @@
     "region": "Europe",
     "image": null,
     "rent1BR": 2600,
-    "rent2BR": 3400,
-    "costOne": 3600,
-    "costTwo": 5600
+    "rent2BR": 3800,
+    "costOne": 5400,
+    "costTwo": 8200
   },
   {
     "id": "manchester-uk",
@@ -347,9 +347,9 @@
     "region": "Europe",
     "image": null,
     "rent1BR": 2600,
-    "rent2BR": 3500,
-    "costOne": 3800,
-    "costTwo": 6000
+    "rent2BR": 3800,
+    "costOne": 5800,
+    "costTwo": 9500
   },
   {
     "id": "geneva-ch",
@@ -357,10 +357,10 @@
     "country": "Switzerland",
     "region": "Europe",
     "image": null,
-    "rent1BR": 2500,
-    "rent2BR": 3400,
-    "costOne": 3700,
-    "costTwo": 5900
+    "rent1BR": 2400,
+    "rent2BR": 3600,
+    "costOne": 5500,
+    "costTwo": 9000
   },
   {
     "id": "madrid-es",
@@ -918,10 +918,10 @@
     "country": "Indonesia",
     "region": "Asia",
     "image": null,
-    "rent1BR": 400,
-    "rent2BR": 650,
-    "costOne": 1000,
-    "costTwo": 1600
+    "rent1BR": 250,
+    "rent2BR": 420,
+    "costOne": 850,
+    "costTwo": 1400
   },
   {
     "id": "taipei-tw",
@@ -1171,10 +1171,10 @@
     "country": "Georgia",
     "region": "Europe",
     "image": null,
-    "rent1BR": 420,
-    "rent2BR": 600,
-    "costOne": 1000,
-    "costTwo": 1500
+    "rent1BR": 550,
+    "rent2BR": 850,
+    "costOne": 1450,
+    "costTwo": 2300
   },
   {
     "id": "yerevan-am",
@@ -1259,10 +1259,10 @@
     "country": "India",
     "region": "Asia",
     "image": null,
-    "rent1BR": 400,
-    "rent2BR": 650,
-    "costOne": 1000,
-    "costTwo": 1600
+    "rent1BR": 180,
+    "rent2BR": 320,
+    "costOne": 750,
+    "costTwo": 1250
   },
   {
     "id": "sri-lanka-colombo",
@@ -1314,10 +1314,10 @@
     "country": "Iran",
     "region": "Middle East",
     "image": null,
-    "rent1BR": 400,
-    "rent2BR": 650,
-    "costOne": 1000,
-    "costTwo": 1600
+    "rent1BR": 250,
+    "rent2BR": 450,
+    "costOne": 850,
+    "costTwo": 1400
   },
   {
     "id": "izmir-tr",
@@ -1501,10 +1501,10 @@
     "country": "Tunisia",
     "region": "Africa",
     "image": null,
-    "rent1BR": 400,
-    "rent2BR": 650,
-    "costOne": 1000,
-    "costTwo": 1600
+    "rent1BR": 200,
+    "rent2BR": 350,
+    "costOne": 800,
+    "costTwo": 1300
   },
   {
     "id": "fes-ma",
@@ -1569,8 +1569,8 @@
     "image": null,
     "rent1BR": 2600,
     "rent2BR": 3400,
-    "costOne": 3600,
-    "costTwo": 5600
+    "costOne": 5200,
+    "costTwo": 8000
   },
   {
     "id": "philadelphia-us",
@@ -1611,10 +1611,10 @@
     "country": "USA",
     "region": "North America",
     "image": null,
-    "rent1BR": 2800,
-    "rent2BR": 3700,
-    "costOne": 3900,
-    "costTwo": 6200
+    "rent1BR": 3100,
+    "rent2BR": 4500,
+    "costOne": 5400,
+    "costTwo": 8000
   },
   {
     "id": "sacramento-us",
@@ -2381,8 +2381,8 @@
     "country": "Laos",
     "region": "Asia",
     "image": null,
-    "rent1BR": 400,
-    "rent2BR": 650,
+    "rent1BR": 300,
+    "rent2BR": 480,
     "costOne": 950,
     "costTwo": 1500
   },
@@ -2393,9 +2393,9 @@
     "region": "Asia",
     "image": null,
     "rent1BR": 350,
-    "rent2BR": 600,
-    "costOne": 950,
-    "costTwo": 1500
+    "rent2BR": 500,
+    "costOne": 1000,
+    "costTwo": 1650
   },
   {
     "id": "pokhara-np",
@@ -2403,10 +2403,10 @@
     "country": "Nepal",
     "region": "Asia",
     "image": null,
-    "rent1BR": 350,
-    "rent2BR": 600,
-    "costOne": 900,
-    "costTwo": 1400
+    "rent1BR": 200,
+    "rent2BR": 320,
+    "costOne": 650,
+    "costTwo": 1050
   },
   {
     "id": "tashkent-uz",
