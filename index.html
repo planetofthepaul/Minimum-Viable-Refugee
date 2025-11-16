@@ -438,6 +438,8 @@
 <script>
 // ----------------- Data load -----------------
 let CITIES = [];
+let CITY_ELEMENTS = new Map(); // Store DOM elements for reuse
+
 fetch('cities.json')
   .then(r => r.json())
   .then(async data => {
@@ -592,12 +594,19 @@ function breakdownHTML(c){
   `;
 }
 
-function card(c){
+function createCardElement(c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
   const imgSrc = c._img || FALLBACK_IMG;
 
-  return `
-  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" tabindex="0" aria-label="${c.city}, ${c.country}">
+  const article = document.createElement('article');
+  article.className = 'card';
+  article.dataset.id = c.id;
+  article.dataset.city = c.city;
+  article.dataset.country = c.country;
+  article.tabIndex = 0;
+  article.setAttribute('aria-label', `${c.city}, ${c.country}`);
+  
+  article.innerHTML = `
     <div class="img">
       <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" />
       <div class="chip">${top}</div>
@@ -617,12 +626,26 @@ function card(c){
           <div class="v">${money(c._rent)}/mo</div>
         </div>
       </div>
-    </div>
-  </article>`;
+    </div>`;
+  
+  return article;
+}
+
+function updateCardElement(cardEl, c){
+  const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
+  
+  cardEl.querySelector('.chip').textContent = top;
+  
+  const rowEls = cardEl.querySelectorAll('.row');
+  rowEls[0].querySelector('.k').textContent = household==="single" ? "Monthly cost (single)" : "Monthly cost (two)";
+  rowEls[0].querySelector('.v').textContent = `${money(c._cost)}/mo`;
+  rowEls[1].querySelector('.k').textContent = bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent";
+  rowEls[1].querySelector('.v').textContent = `${money(c._rent)}/mo`;
 }
 
 function render(){
   const app = $("#app");
+
   const rows = computeRows();
   LAST_ROWS = rows;
 
@@ -631,69 +654,49 @@ function render(){
     $("#summary").textContent = "Showing 0 cities";
     return;
   }
-
-  // Check if grid exists
-  let gridEl = app.querySelector('.grid');
   
+  let gridEl = app.querySelector('.grid');
   if (!gridEl) {
-    // First render - create grid
-    app.innerHTML = `<section class="grid"></section>`;
-    gridEl = app.querySelector('.grid');
-    gridEl.innerHTML = rows.map(card).join("");
-  } else {
-    // Update existing - keep images stable
-    const existingCards = Array.from(gridEl.querySelectorAll('.card'));
-    const existingIds = new Set(existingCards.map(c => c.dataset.id));
-    const newIds = new Set(rows.map(c => String(c.id)));
-    
-    // Remove cards that shouldn't be shown
-    existingCards.forEach(cardEl => {
-      if (!newIds.has(cardEl.dataset.id)) {
-        cardEl.remove();
-      }
-    });
-    
-    // Update or add cards
-    rows.forEach((c, index) => {
-      const id = String(c.id);
-      let cardEl = gridEl.querySelector(`[data-id="${id}"]`);
-      
-      if (cardEl) {
-        // Update existing card text only
-        const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
-        cardEl.querySelector('.chip').textContent = top;
-        cardEl.querySelector('.title h3').textContent = `${c.city}, ${c.country}`;
-        cardEl.querySelector('.title .mini').textContent = c.region;
-        
-        const rowEls = cardEl.querySelectorAll('.row');
-        rowEls[0].querySelector('.k').textContent = household==="single" ? "Monthly cost (single)" : "Monthly cost (two)";
-        rowEls[0].querySelector('.v').textContent = `${money(c._cost)}/mo`;
-        rowEls[1].querySelector('.k').textContent = bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent";
-        rowEls[1].querySelector('.v').textContent = `${money(c._rent)}/mo`;
-        
-        // Ensure correct position
-        const currentIndex = Array.from(gridEl.children).indexOf(cardEl);
-        if (currentIndex !== index) {
-          if (index >= gridEl.children.length) {
-            gridEl.appendChild(cardEl);
-          } else {
-            gridEl.insertBefore(cardEl, gridEl.children[index]);
-          }
-        }
-      } else {
-        // New card
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = card(c);
-        const newCard = tempDiv.firstElementChild;
-        
-        if (index >= gridEl.children.length) {
-          gridEl.appendChild(newCard);
-        } else {
-          gridEl.insertBefore(newCard, gridEl.children[index]);
-        }
-      }
-    });
+    gridEl = document.createElement('section');
+    gridEl.className = 'grid';
+    app.innerHTML = '';
+    app.appendChild(gridEl);
   }
+  
+  // Build map of what should be displayed
+  const currentIds = new Set(rows.map(c => String(c.id)));
+  
+  // Remove cards that shouldn't be shown
+  Array.from(gridEl.children).forEach(cardEl => {
+    if (!currentIds.has(cardEl.dataset.id)) {
+      CITY_ELEMENTS.delete(cardEl.dataset.id);
+      cardEl.remove();
+    }
+  });
+  
+  // Add or update cards
+  rows.forEach((c, index) => {
+    const id = String(c.id);
+    let cardEl = CITY_ELEMENTS.get(id);
+    
+    if (!cardEl) {
+      // Create new card element
+      cardEl = createCardElement(c);
+      CITY_ELEMENTS.set(id, cardEl);
+    } else {
+      // Update existing card
+      updateCardElement(cardEl, c);
+    }
+    
+    // Ensure correct position in grid
+    if (gridEl.children[index] !== cardEl) {
+      if (index >= gridEl.children.length) {
+        gridEl.appendChild(cardEl);
+      } else {
+        gridEl.insertBefore(cardEl, gridEl.children[index]);
+      }
+    }
+  });
   
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
 }
@@ -724,23 +727,4 @@ function openCityDetail(id, cardEl){
         <div class="overlay-header-left">
           <button class="overlay-close" type="button" data-close>&times;</button>
           <div>
-            <div class="overlay-city">${city.city}, ${city.country}</div>
-            <div class="overlay-region mini">${city.region}${pctLabel ? " · " + pctLabel : ""}</div>
-          </div>
-        </div>
-      </div>
-      <div class="overlay-media">
-        <img src="${imgSrc}" alt="${city.city}, ${city.country}">
-      </div>
-      <div class="overlay-body">
-        ${breakdownHTML(city)}
-        <div class="city-links">
-          <div class="city-links-title">Quick links</div>
-          <ul>
-            <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
-            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  `;
+            <div class="overlay-city">${city.city}, ${city.country
