@@ -213,31 +213,35 @@
     padding:16px 18px 18px;
   }
 
+  /* updated breakdown styles */
   .break-heading{
-    font-size:12px;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
     color:var(--muted);
-    margin-bottom:4px;
+    margin-bottom:6px;
   }
 
-  /* Simple breakdown layout */
   .break-section{
     margin-top:4px;
   }
   .primary-total{
-    padding:8px 0 10px;
+    padding:10px 0 12px;
     border-bottom:1px solid var(--line);
-    margin-bottom:6px;
+    margin-bottom:10px;
   }
   .primary-total .k{
-    font-size:11px;
+    font-size:12px;
+    color:var(--muted);
   }
   .primary-total .v{
     margin-top:4px;
-    font-size:18px;
+    font-size:22px;
+    font-weight:700;
   }
   .primary-total .sub{
-    margin-top:2px;
-    font-size:11px;
+    margin-top:4px;
+    font-size:12px;
     color:var(--muted);
   }
 
@@ -250,9 +254,9 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:4px 0;
+    padding:6px 0;
     border-bottom:1px solid #151b26;
-    font-size:13px;
+    font-size:14px;
   }
   .break-item:last-child{
     border-bottom:none;
@@ -281,8 +285,8 @@
     margin-bottom:4px;
   }
   .city-links a{
-    font-size:13px;
-    color:var(--brand);
+    font-size:14px;
+    color:var(--brand2); /* match logo accent, not default blue */
     text-decoration:none;
   }
   .city-links a:hover{
