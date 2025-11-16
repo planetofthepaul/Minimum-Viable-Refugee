@@ -30,6 +30,14 @@
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" href="logo-mve.png">
+
+<!-- Privacy-friendly analytics by Plausible -->
+<script async src="https://plausible.io/js/pa-LtfPK73TbS61OwXTI4wmz.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+
 <style>
   :root{
     --bg:#0b0e13; --surface:#0f1420; --text:#eaf1ff; --muted:#a9b3c7;
@@ -615,7 +623,6 @@ function card(c){
 
 function render(){
   const app = $("#app");
-
   const rows = computeRows();
   LAST_ROWS = rows;
 
@@ -624,7 +631,70 @@ function render(){
     $("#summary").textContent = "Showing 0 cities";
     return;
   }
-  app.innerHTML = `<section class="grid">${rows.map(card).join("")}</section>`;
+
+  // Check if grid exists
+  let gridEl = app.querySelector('.grid');
+  
+  if (!gridEl) {
+    // First render - create grid
+    app.innerHTML = `<section class="grid"></section>`;
+    gridEl = app.querySelector('.grid');
+    gridEl.innerHTML = rows.map(card).join("");
+  } else {
+    // Update existing - keep images stable
+    const existingCards = Array.from(gridEl.querySelectorAll('.card'));
+    const existingIds = new Set(existingCards.map(c => c.dataset.id));
+    const newIds = new Set(rows.map(c => String(c.id)));
+    
+    // Remove cards that shouldn't be shown
+    existingCards.forEach(cardEl => {
+      if (!newIds.has(cardEl.dataset.id)) {
+        cardEl.remove();
+      }
+    });
+    
+    // Update or add cards
+    rows.forEach((c, index) => {
+      const id = String(c.id);
+      let cardEl = gridEl.querySelector(`[data-id="${id}"]`);
+      
+      if (cardEl) {
+        // Update existing card text only
+        const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
+        cardEl.querySelector('.chip').textContent = top;
+        cardEl.querySelector('.title h3').textContent = `${c.city}, ${c.country}`;
+        cardEl.querySelector('.title .mini').textContent = c.region;
+        
+        const rowEls = cardEl.querySelectorAll('.row');
+        rowEls[0].querySelector('.k').textContent = household==="single" ? "Monthly cost (single)" : "Monthly cost (two)";
+        rowEls[0].querySelector('.v').textContent = `${money(c._cost)}/mo`;
+        rowEls[1].querySelector('.k').textContent = bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent";
+        rowEls[1].querySelector('.v').textContent = `${money(c._rent)}/mo`;
+        
+        // Ensure correct position
+        const currentIndex = Array.from(gridEl.children).indexOf(cardEl);
+        if (currentIndex !== index) {
+          if (index >= gridEl.children.length) {
+            gridEl.appendChild(cardEl);
+          } else {
+            gridEl.insertBefore(cardEl, gridEl.children[index]);
+          }
+        }
+      } else {
+        // New card
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = card(c);
+        const newCard = tempDiv.firstElementChild;
+        
+        if (index >= gridEl.children.length) {
+          gridEl.appendChild(newCard);
+        } else {
+          gridEl.insertBefore(newCard, gridEl.children[index]);
+        }
+      }
+    });
+  }
+  
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
 }
 
@@ -674,103 +744,3 @@ function openCityDetail(id, cardEl){
       </div>
     </div>
   `;
-
-  overlayEl.classList.add('open');
-  overlayEl.setAttribute('aria-hidden','false');
-  document.body.style.overflow = 'hidden';
-
-  const closeBtn = overlayEl.querySelector('[data-close]');
-  if(closeBtn){
-    closeBtn.addEventListener('click', closeCityDetail);
-  }
-}
-
-// Click to open overlay
-window.addEventListener("click", (e)=>{
-  const cardEl = e.target.closest(".card");
-  if(cardEl && !overlayEl.contains(e.target)){
-    const id = cardEl.dataset.id;
-    openCityDetail(id, cardEl);
-  }
-});
-
-// Filter + inputs
-["income","search","sort"].forEach(id=>{
-  const el = $("#"+id);
-  el.addEventListener("input", render);
-  el.addEventListener("change", render);
-});
-$("#btnSingle").addEventListener("click", ()=> {
-  household="single";
-  $("#btnSingle").setAttribute("aria-pressed","true");
-  $("#btnTwo").setAttribute("aria-pressed","false");
-  render();
-});
-$("#btnTwo").addEventListener("click", ()=> {
-  household="two";
-  $("#btnSingle").setAttribute("aria-pressed","false");
-  $("#btnTwo").setAttribute("aria-pressed","true");
-  render();
-});
-$("#btn1BR").addEventListener("click", ()=> {
-  bedrooms="1";
-  $("#btn1BR").setAttribute("aria-pressed","true");
-  $("#btn2BR").setAttribute("aria-pressed","false");
-  render();
-});
-$("#btn2BR").addEventListener("click", ()=> {
-  bedrooms="2";
-  $("#btn1BR").setAttribute("aria-pressed","false");
-  $("#btn2BR").setAttribute("aria-pressed","true");
-  render();
-});
-
-document.addEventListener("keydown", (e)=>{
-  if(e.key==="Enter"){
-    const cardEl = document.activeElement.closest?.(".card");
-    if(cardEl){
-      e.preventDefault();
-      openCityDetail(cardEl.dataset.id, cardEl);
-    }
-  }
-  if(e.key==="Escape" && overlayEl.classList.contains('open')){
-    closeCityDetail();
-  }
-  if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
-    e.preventDefault(); $("#search").focus();
-  }
-});
-
-// Close overlay when clicking backdrop
-overlayEl.addEventListener('click', (e)=>{
-  if(e.target === overlayEl){
-    closeCityDetail();
-  }
-});
-
-// --- Filter toggles: top pill + bottom button, synced ---
-const controlsEl = document.querySelector('.controls');
-const filterBtnTop = document.getElementById('filterToggleTop');
-const filterBtnBottom = document.getElementById('filterToggleBottom');
-
-function setFilterHidden(hidden){
-  controlsEl.classList.toggle('is-hidden', hidden);
-  const label = hidden ? 'Show filters' : 'Hide filters';
-  [filterBtnTop, filterBtnBottom].forEach(btn => {
-    if(!btn) return;
-    btn.textContent = label;
-    btn.setAttribute('aria-expanded', String(!hidden));
-  });
-}
-
-filterBtnTop.addEventListener('click', () => {
-  const currentlyHidden = controlsEl.classList.contains('is-hidden');
-  setFilterHidden(!currentlyHidden);
-});
-filterBtnBottom.addEventListener('click', () => {
-  const currentlyHidden = controlsEl.classList.contains('is-hidden');
-  setFilterHidden(!currentlyHidden);
-});
-</script>
-</body>
-</html>
