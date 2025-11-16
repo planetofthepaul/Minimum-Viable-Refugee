@@ -233,6 +233,160 @@
     box-shadow:0 8px 24px rgba(106,168,255,0.3);
   }
 
+  /* City Modal (copied from homepage) */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,15,0.96);
+    backdrop-filter:blur(10px);
+    z-index:200;
+    display:none;
+    overflow-y:auto;
+    padding:16px;
+  }
+  .overlay.open{
+    display:block;
+  }
+  .overlay-inner{
+    max-width:900px;
+    margin:0 auto;
+    background:var(--surface);
+    border-radius:16px;
+    border:1px solid var(--line);
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .overlay-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    background:rgba(11,14,19,0.92);
+  }
+  .overlay-header-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .overlay-close{
+    border:none;
+    background:#151b29;
+    color:var(--muted);
+    width:30px;
+    height:30px;
+    border-radius:999px;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .overlay-close:hover{
+    background:#1f283a;
+    color:var(--text);
+  }
+  .overlay-city{
+    font-size:22px;
+    font-weight:700;
+  }
+  .overlay-region{
+    margin-top:2px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .overlay-media{
+    position:relative;
+    aspect-ratio:16/6;
+    background:#0e1526;
+  }
+  .overlay-media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .overlay-body{
+    padding:16px 18px 18px;
+  }
+  .break-heading{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .break-section{
+    margin-top:4px;
+  }
+  .primary-total{
+    padding:10px 0 12px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:10px;
+  }
+  .primary-total .k{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .primary-total .v{
+    margin-top:4px;
+    font-size:22px;
+    font-weight:700;
+  }
+  .primary-total .sub{
+    margin-top:4px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .break-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  .break-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 0;
+    border-bottom:1px solid #151b26;
+    font-size:14px;
+  }
+  .break-item:last-child{
+    border-bottom:none;
+  }
+  .break-item-label{
+    color:var(--muted);
+  }
+  .break-item-value{
+    font-weight:600;
+  }
+  .city-links{
+    margin-top:16px;
+  }
+  .city-links-title{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .city-links ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  .city-links li{
+    margin-bottom:4px;
+  }
+  .city-links a{
+    font-size:14px;
+    color:var(--brand2);
+    text-decoration:none;
+  }
+  .city-links a:hover{
+    text-decoration:underline;
+  }
+
   @media(max-width:768px){
     .wrap{padding:40px 16px}
     .features{grid-template-columns:1fr}
@@ -304,7 +458,7 @@
   <!-- Map Section -->
   <section class="map-section">
     <h2>Our Global Network</h2>
-    <p class="map-subtitle">230+ cities across 6 continents</p>
+    <p class="map-subtitle">230+ cities across 6 continents - click any city to see details</p>
     <div id="map"></div>
     <div class="map-legend">
       <div class="legend-item">
@@ -349,325 +503,438 @@
   </section>
 </main>
 
+<!-- City Detail Modal -->
+<aside id="cityOverlay" class="overlay" aria-hidden="true"></aside>
+
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="cities.json"></script>
 <script>
-// City coordinates database - mapped from your actual cities
-const cityCoordinates = {
-  "Chiang Mai": [18.7883, 98.9853],
-  "Lisbon": [38.7223, -9.1393],
-  "New York City": [40.7128, -74.0060],
-  "Los Angeles": [34.0522, -118.2437],
-  "San Francisco": [37.7749, -122.4194],
-  "Seattle": [47.6062, -122.3321],
-  "Austin": [30.2672, -97.7431],
-  "Miami": [25.7617, -80.1918],
-  "Chicago": [41.8781, -87.6298],
-  "Denver": [39.7392, -104.9903],
-  "Phoenix": [33.4484, -112.0740],
-  "Portland": [45.5152, -122.6784],
-  "Toronto": [43.6532, -79.3832],
-  "Vancouver": [49.2827, -123.1207],
-  "Montreal": [45.5017, -73.5673],
-  "Mexico City": [19.4326, -99.1332],
-  "Guadalajara": [20.6597, -103.3496],
-  "Mérida": [20.9674, -89.5926],
-  "London": [51.5074, -0.1278],
-  "Manchester": [53.4808, -2.2426],
-  "Edinburgh": [55.9533, -3.1883],
-  "Dublin": [53.3498, -6.2603],
-  "Paris": [48.8566, 2.3522],
-  "Lyon": [45.7640, 4.8357],
-  "Marseille": [43.2965, 5.3698],
-  "Berlin": [52.5200, 13.4050],
-  "Munich": [48.1351, 11.5820],
-  "Hamburg": [53.5511, 9.9937],
-  "Amsterdam": [52.3676, 4.9041],
-  "Rotterdam": [51.9225, 4.4792],
-  "Brussels": [50.8503, 4.3517],
-  "Zurich": [47.3769, 8.5417],
-  "Geneva": [46.2044, 6.1432],
-  "Madrid": [40.4168, -3.7038],
-  "Barcelona": [41.3851, 2.1734],
-  "Valencia": [39.4699, -0.3763],
-  "Seville": [37.3891, -5.9845],
-  "Porto": [41.1579, -8.6291],
-  "Rome": [41.9028, 12.4964],
-  "Milan": [45.4642, 9.1900],
-  "Florence": [43.7696, 11.2558],
-  "Athens": [37.9838, 23.7275],
-  "Thessaloniki": [40.6401, 22.9444],
-  "Prague": [50.0755, 14.4378],
-  "Budapest": [47.4979, 19.0402],
-  "Krakow": [50.0647, 19.9450],
-  "Warsaw": [52.2297, 21.0122],
-  "Tallinn": [59.4370, 24.7536],
-  "Riga": [56.9496, 24.1052],
-  "Vilnius": [54.6872, 25.2797],
-  "Oslo": [59.9139, 10.7522],
-  "Stockholm": [59.3293, 18.0686],
-  "Copenhagen": [55.6761, 12.5683],
-  "Helsinki": [60.1699, 24.9384],
-  "Istanbul": [41.0082, 28.9784],
-  "Dubai": [25.2048, 55.2708],
-  "Abu Dhabi": [24.4539, 54.3773],
-  "Doha": [25.2854, 51.5310],
-  "Tel Aviv": [32.0853, 34.7818],
-  "Cairo": [30.0444, 31.2357],
-  "Cape Town": [-33.9249, 18.4241],
-  "Johannesburg": [-26.2041, 28.0473],
-  "Nairobi": [-1.2921, 36.8219],
-  "Lagos": [6.5244, 3.3792],
-  "Accra": [5.6037, -0.1870],
-  "Addis Ababa": [9.0320, 38.7469],
-  "Tokyo": [35.6762, 139.6503],
-  "Osaka": [34.6937, 135.5023],
-  "Kyoto": [35.0116, 135.7681],
-  "Seoul": [37.5665, 126.9780],
-  "Busan": [35.1796, 129.0756],
-  "Hong Kong": [22.3193, 114.1694],
-  "Singapore": [1.3521, 103.8198],
-  "Bangkok": [13.7563, 100.5018],
-  "Phuket": [7.8804, 98.3923],
-  "Kuala Lumpur": [3.1390, 101.6869],
-  "Penang": [5.4164, 100.3327],
-  "Hanoi": [21.0285, 105.8542],
-  "Da Nang": [16.0544, 108.2022],
-  "Ho Chi Minh City": [10.8231, 106.6297],
-  "Bali": [-8.3405, 115.0920],
-  "Jakarta": [-6.2088, 106.8456],
-  "Yogyakarta": [-7.7956, 110.3695],
-  "Taipei": [25.0330, 121.5654],
-  "Manila": [14.5995, 120.9842],
-  "Cebu": [10.3157, 123.8854],
-  "Sydney": [-33.8688, 151.2093],
-  "Melbourne": [-37.8136, 144.9631],
-  "Brisbane": [-27.4698, 153.0251],
-  "Auckland": [-36.8485, 174.7633],
-  "Wellington": [-41.2865, 174.7762],
-  "Buenos Aires": [-34.6037, -58.3816],
-  "Santiago": [-33.4489, -70.6693],
-  "Lima": [-12.0464, -77.0428],
-  "Medellín": [6.2476, -75.5658],
-  "Bogotá": [4.7110, -74.0721],
-  "Quito": [-0.1807, -78.4678],
-  "Montevideo": [-34.9011, -56.1645],
-  "Rio de Janeiro": [-22.9068, -43.1729],
-  "São Paulo": [-23.5505, -46.6333],
-  "Florianópolis": [-27.5954, -48.5480],
-  "Marrakesh": [31.6295, -7.9811],
-  "Casablanca": [33.5731, -7.5898],
-  "Tunis": [36.8065, 10.1815],
-  "Ankara": [39.9334, 32.8597],
-  "Tbilisi": [41.7151, 44.8271],
-  "Yerevan": [40.1792, 44.4991],
-  "Almaty": [43.2220, 76.8512],
-  "Baku": [40.4093, 49.8671],
-  "Delhi": [28.7041, 77.1025],
-  "Mumbai": [19.0760, 72.8777],
-  "Bengaluru": [12.9716, 77.5946],
-  "Goa": [15.2993, 74.1240],
-  "Jaipur": [26.9124, 75.7873],
-  "Colombo": [6.9271, 79.8612],
-  "Beijing": [39.9042, 116.4074],
-  "Shanghai": [31.2304, 121.4737],
-  "Shenzhen": [22.5431, 114.0579],
-  "Tehran": [35.6892, 51.3890],
-  "Izmir": [38.4237, 27.1428],
-  "Chania": [35.5138, 24.0180],
-  "Sofia": [42.6977, 23.3219],
-  "Bucharest": [44.4268, 26.1025],
-  "Belgrade": [44.7866, 20.4489],
-  "Zagreb": [45.8150, 15.9819],
-  "Sarajevo": [43.8564, 18.4131],
-  "Madeira": [32.6669, -16.9241],
-  "Las Palmas (Gran Canaria)": [28.1236, -15.4366],
-  "Reykjavik": [64.1466, -21.9426],
-  "Muscat": [23.5880, 58.3829],
-  "Antalya": [36.8969, 30.7133],
-  "Amman": [31.9454, 35.9284],
-  "Beirut": [33.8886, 35.4955],
-  "Faro (Algarve)": [37.0194, -7.9322],
-  "Valletta": [35.8989, 14.5146],
-  "Sousse": [35.8256, 10.6411],
-  "Fes": [34.0181, -5.0078],
-  "Yangon": [16.8661, 96.1951],
-  "Taichung": [24.1477, 120.6736],
-  "Bergen": [60.3913, 5.3221],
-  "Malaga": [36.7213, -4.4214],
-  "Boston": [42.3601, -71.0589],
-  "Philadelphia": [39.9526, -75.1652],
-  "Washington, DC": [38.9072, -77.0369],
-  "San Diego": [32.7157, -117.1611],
-  "San Jose": [37.3382, -121.8863],
-  "Sacramento": [38.5816, -121.4944],
-  "Houston": [29.7604, -95.3698],
-  "Dallas": [32.7767, -96.7970],
-  "San Antonio": [29.4241, -98.4936],
-  "Atlanta": [33.7490, -84.3880],
-  "Charlotte": [35.2271, -80.8431],
-  "Raleigh": [35.7796, -78.6382],
-  "Nashville": [36.1627, -86.7816],
-  "New Orleans": [29.9511, -90.0715],
-  "Orlando": [28.5383, -81.3792],
-  "Tampa": [27.9506, -82.4572],
-  "Pittsburgh": [40.4406, -79.9959],
-  "Detroit": [42.3314, -83.0458],
-  "Minneapolis": [44.9778, -93.2650],
-  "St. Louis": [38.6270, -90.1994],
-  "Kansas City": [39.0997, -94.5786],
-  "Salt Lake City": [40.7608, -111.8910],
-  "Milwaukee": [43.0389, -87.9065],
-  "Columbus": [39.9612, -82.9988],
-  "Cincinnati": [39.1031, -84.5120],
-  "Honolulu": [21.3099, -157.8581],
-  "Portland (Maine)": [43.6591, -70.2568],
-  "San Juan": [18.4655, -66.1057],
-  "Calgary": [51.0447, -114.0719],
-  "Ottawa": [45.4215, -75.6972],
-  "Winnipeg": [49.8951, -97.1384],
-  "Monterrey": [25.6866, -100.3161],
-  "Puebla": [19.0414, -98.2063],
-  "Playa del Carmen": [20.6296, -87.0739],
-  "San Miguel de Allende": [20.9153, -100.7436],
-  "Granada": [37.1773, -3.5986],
-  "Alicante": [38.3452, -0.4810],
-  "Bilbao": [43.2630, -2.9350],
-  "Coimbra": [40.2033, -8.4103],
-  "Braga": [41.5454, -8.4265],
-  "Bologna": [44.4949, 11.3426],
-  "Turin": [45.0703, 7.6869],
-  "Naples": [40.8518, 14.2681],
-  "Palermo": [38.1157, 13.3615],
-  "Nice": [43.7102, 7.2620],
-  "Bordeaux": [44.8378, -0.5792],
-  "Toulouse": [43.6047, 1.4442],
-  "Antwerp": [51.2194, 4.4025],
-  "Ghent": [51.0543, 3.7174],
-  "Lausanne": [46.5197, 6.6323],
-  "Basel": [47.5596, 7.5886],
-  "Vienna": [48.2082, 16.3738],
-  "Salzburg": [47.8095, 13.0550],
-  "Ljubljana": [46.0569, 14.5058],
-  "Gdansk": [54.3520, 18.6466],
-  "Wroclaw": [51.1079, 17.0385],
-  "Cluj-Napoca": [46.7712, 23.6236],
-  "Aarhus": [56.1629, 10.2039],
-  "Trondheim": [63.4305, 10.3951],
-  "Guangzhou": [23.1291, 113.2644],
-  "Chengdu": [30.5728, 104.0668],
-  "Xi'an": [34.3416, 108.9398],
-  "Kunming": [25.0408, 102.7129],
-  "Sanya": [18.2528, 109.5117],
-  "Guiyang": [26.6470, 106.6302],
-  "Nanjing": [32.0603, 118.7969],
-  "Wuhan": [30.5928, 114.3055],
-  "Chiang Rai": [19.9105, 99.8406],
-  "Koh Samui": [9.5354, 100.0633],
-  "Hoi An": [15.8801, 108.3380],
-  "Nha Trang": [12.2388, 109.1967],
-  "Phnom Penh": [11.5564, 104.9282],
-  "Siem Reap": [13.3633, 103.8564],
-  "Vientiane": [17.9757, 102.6331],
-  "Luang Prabang": [19.8845, 102.1350],
-  "Kathmandu": [27.7172, 85.3240],
-  "Pokhara": [28.2096, 83.9856],
-  "Tashkent": [41.2995, 69.2401],
-  "Bishkek": [42.8746, 74.5698],
-  "Ulaanbaatar": [47.8864, 106.9057],
-  "Riyadh": [24.7136, 46.6753],
-  "Jeddah": [21.4858, 39.1925],
-  "Kuwait City": [29.3759, 47.9774],
-  "Manama": [26.2285, 50.5860],
-  "Kigali": [-1.9441, 30.0619],
-  "Dar es Salaam": [-6.7924, 39.2083],
-  "Zanzibar (Stone Town)": [-6.1659, 39.2026],
-  "Windhoek": [-22.5597, 17.0832],
-  "Gaborone": [-24.6282, 25.9231],
-  "Cartagena": [10.3910, -75.4794],
-  "Cali": [3.4516, -76.5320],
-  "Cusco": [-13.5319, -71.9675],
-  "Arequipa": [-16.4090, -71.5375],
-  "La Paz": [-16.5000, -68.1500],
-  "Santa Cruz de la Sierra": [-17.7833, -63.1821],
-  "Asunción": [-25.2637, -57.5759],
-  "Belo Horizonte": [-19.9167, -43.9345],
-  "Curitiba": [-25.4284, -49.2733],
-  "Recife": [-8.0476, -34.8770],
-  "Fortaleza": [-3.7319, -38.5267]
-};
+// Load city data
+let CITIES = [];
+fetch('cities.json')
+  .then(r => r.json())
+  .then(data => {
+    CITIES = data;
+    initMap();
+  })
+  .catch(err => console.error('Could not load cities', err));
 
-// Initialize map
-const map = L.map('map', {
-  center: [20, 0],
-  zoom: 2,
-  minZoom: 2,
-  maxZoom: 10,
-  worldCopyJump: true
-});
+const money = x => `$${Math.round(x).toLocaleString()}`;
 
-// Dark tile layer
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  subdomains: 'abcd',
-  maxZoom: 20
-}).addTo(map);
-
-// Add markers for each city
-Object.entries(cityCoordinates).forEach(([city, coords]) => {
-  const marker = L.circleMarker(coords, {
-    radius: 5,
-    fillColor: '#6aa8ff',
-    color: '#8cffd1',
-    weight: 1,
-    opacity: 0.8,
-    fillOpacity: 0.6
-  }).addTo(map);
+function openCityModal(cityName) {
+  const city = CITIES.find(c => c.city === cityName);
+  if (!city) return;
   
-  // Create clickable popup with link to calculator
-  const popupContent = `
-    <div style="text-align: center; padding: 8px; min-width: 180px;">
-      <strong style="color:#0b0e13; font-size: 18px; font-weight: 700; display: block; margin-bottom: 8px;">${city}</strong>
-     <a href="/#city=${encodeURIComponent(city)}" style="
-        color: #fff;
-        background: linear-gradient(135deg, #6aa8ff 0%, #8cffd1 100%);
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 600;
-        padding: 8px 16px;
-        border-radius: 6px;
-        display: inline-block;
-        transition: transform 0.2s;
-      " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-        View Cost of Living →
-      </a>
+  const overlayEl = document.getElementById('cityOverlay');
+  const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
+  
+  // Use default income of $6000 for calculations
+  const income = 6000;
+  const cost = city.costOne; // Show single person cost by default
+  const rent = city.rent1BR;
+  const pct = (cost / income) * 100;
+  
+  // Calculate breakdown
+  const remaining = Math.max(0, cost - rent);
+  const wFood=2, wUtil=1, wTran=1, wOther=2, wSum=6;
+  const food = Math.round(remaining * (wFood / wSum));
+  const util = Math.round(remaining * (wUtil / wSum));
+  const tran = Math.round(remaining * (wTran / wSum));
+  const other = Math.max(0, cost - (rent + food + util + tran));
+  
+  overlayEl.innerHTML = `
+    <div class="overlay-inner">
+      <div class="overlay-header">
+        <div class="overlay-header-left">
+          <button class="overlay-close" type="button">&times;</button>
+          <div>
+            <div class="overlay-city">${city.city}, ${city.country}</div>
+            <div class="overlay-region">${city.region} · ${Math.round(pct)}% of $${income.toLocaleString()}/mo income</div>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-media">
+        <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=2000" alt="${city.city}">
+      </div>
+      <div class="overlay-body">
+        <div class="break-section">
+          <div class="break-heading">Monthly breakdown</div>
+          <div class="primary-total">
+            <div class="k">Total monthly cost (single)</div>
+            <div class="v">${money(cost)}/mo</div>
+            <div class="sub">${Math.round(pct)}% of your income</div>
+          </div>
+          <ul class="break-list">
+            <li class="break-item">
+              <span class="break-item-label">1-bedroom rent</span>
+              <span class="break-item-value">${money(rent)}/mo</span>
+            </li>
+            <li class="break-item">
+              <span class="break-item-label">Food</span>
+              <span class="break-item-value">${money(food)}/mo</span>
+            </li>
+            <li class="break-item">
+              <span class="break-item-label">Utilities</span>
+              <span class="break-item-value">${money(util)}/mo</span>
+            </li>
+            <li class="break-item">
+              <span class="break-item-label">Transit</span>
+              <span class="break-item-value">${money(tran)}/mo</span>
+            </li>
+            <li class="break-item">
+              <span class="break-item-label">Other</span>
+              <span class="break-item-value">${money(other)}/mo</span>
+            </li>
+          </ul>
+        </div>
+        <div class="city-links">
+          <div class="city-links-title">Quick links</div>
+          <ul>
+            <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
+            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+            <li><a href="/?city=${encodeURIComponent(city.city)}">Open in Calculator →</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
   `;
-  marker.bindPopup(popupContent, {
-    className: 'custom-popup'
-  });
   
-  // Add hover effect
-  marker.on('mouseover', function() {
-    this.setStyle({
-      radius: 7,
-      fillOpacity: 1
-    });
-  });
+  overlayEl.classList.add('open');
+  overlayEl.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
   
-  marker.on('mouseout', function() {
-    this.setStyle({
-      radius: 5,
-      fillOpacity: 0.6
-    });
+  overlayEl.querySelector('.overlay-close').addEventListener('click', closeCityModal);
+  overlayEl.addEventListener('click', (e) => {
+    if (e.target === overlayEl) closeCityModal();
   });
-  
-  // Make marker clickable to go to calculator
-  marker.on('click', function() {
-    // Popup will show with link, or uncomment below to navigate directly:
-    // window.location.href = `/?city=${encodeURIComponent(city)}`;
-  });
+}
+
+function closeCityModal() {
+  const overlayEl = document.getElementById('cityOverlay');
+  overlayEl.classList.remove('open');
+  overlayEl.setAttribute('aria-hidden', 'true');
+  overlayEl.innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeCityModal();
 });
+
+function initMap() {
+  // City coordinates database
+  const cityCoordinates = {
+    "Chiang Mai": [18.7883, 98.9853],
+    "Lisbon": [38.7223, -9.1393],
+    "New York City": [40.7128, -74.0060],
+    "Los Angeles": [34.0522, -118.2437],
+    "San Francisco": [37.7749, -122.4194],
+    "Seattle": [47.6062, -122.3321],
+    "Austin": [30.2672, -97.7431],
+    "Miami": [25.7617, -80.1918],
+    "Chicago": [41.8781, -87.6298],
+    "Denver": [39.7392, -104.9903],
+    "Phoenix": [33.4484, -112.0740],
+    "Portland": [45.5152, -122.6784],
+    "Toronto": [43.6532, -79.3832],
+    "Vancouver": [49.2827, -123.1207],
+    "Montreal": [45.5017, -73.5673],
+    "Mexico City": [19.4326, -99.1332],
+    "Guadalajara": [20.6597, -103.3496],
+    "Mérida": [20.9674, -89.5926],
+    "London": [51.5074, -0.1278],
+    "Manchester": [53.4808, -2.2426],
+    "Edinburgh": [55.9533, -3.1883],
+    "Dublin": [53.3498, -6.2603],
+    "Paris": [48.8566, 2.3522],
+    "Lyon": [45.7640, 4.8357],
+    "Marseille": [43.2965, 5.3698],
+    "Berlin": [52.5200, 13.4050],
+    "Munich": [48.1351, 11.5820],
+    "Hamburg": [53.5511, 9.9937],
+    "Amsterdam": [52.3676, 4.9041],
+    "Rotterdam": [51.9225, 4.4792],
+    "Brussels": [50.8503, 4.3517],
+    "Zurich": [47.3769, 8.5417],
+    "Geneva": [46.2044, 6.1432],
+    "Madrid": [40.4168, -3.7038],
+    "Barcelona": [41.3851, 2.1734],
+    "Valencia": [39.4699, -0.3763],
+    "Seville": [37.3891, -5.9845],
+    "Porto": [41.1579, -8.6291],
+    "Rome": [41.9028, 12.4964],
+    "Milan": [45.4642, 9.1900],
+    "Florence": [43.7696, 11.2558],
+    "Athens": [37.9838, 23.7275],
+    "Thessaloniki": [40.6401, 22.9444],
+    "Prague": [50.0755, 14.4378],
+    "Budapest": [47.4979, 19.0402],
+    "Krakow": [50.0647, 19.9450],
+    "Warsaw": [52.2297, 21.0122],
+    "Tallinn": [59.4370, 24.7536],
+    "Riga": [56.9496, 24.1052],
+    "Vilnius": [54.6872, 25.2797],
+    "Oslo": [59.9139, 10.7522],
+    "Stockholm": [59.3293, 18.0686],
+    "Copenhagen": [55.6761, 12.5683],
+    "Helsinki": [60.1699, 24.9384],
+    "Istanbul": [41.0082, 28.9784],
+    "Dubai": [25.2048, 55.2708],
+    "Abu Dhabi": [24.4539, 54.3773],
+    "Doha": [25.2854, 51.5310],
+    "Tel Aviv": [32.0853, 34.7818],
+    "Cairo": [30.0444, 31.2357],
+    "Cape Town": [-33.9249, 18.4241],
+    "Johannesburg": [-26.2041, 28.0473],
+    "Nairobi": [-1.2921, 36.8219],
+    "Lagos": [6.5244, 3.3792],
+    "Accra": [5.6037, -0.1870],
+    "Addis Ababa": [9.0320, 38.7469],
+    "Tokyo": [35.6762, 139.6503],
+    "Osaka": [34.6937, 135.5023],
+    "Kyoto": [35.0116, 135.7681],
+    "Seoul": [37.5665, 126.9780],
+    "Busan": [35.1796, 129.0756],
+    "Hong Kong": [22.3193, 114.1694],
+    "Singapore": [1.3521, 103.8198],
+    "Bangkok": [13.7563, 100.5018],
+    "Phuket": [7.8804, 98.3923],
+    "Kuala Lumpur": [3.1390, 101.6869],
+    "Penang": [5.4164, 100.3327],
+    "Hanoi": [21.0285, 105.8542],
+    "Da Nang": [16.0544, 108.2022],
+    "Ho Chi Minh City": [10.8231, 106.6297],
+    "Bali": [-8.3405, 115.0920],
+    "Jakarta": [-6.2088, 106.8456],
+    "Yogyakarta": [-7.7956, 110.3695],
+    "Taipei": [25.0330, 121.5654],
+    "Manila": [14.5995, 120.9842],
+    "Cebu": [10.3157, 123.8854],
+    "Sydney": [-33.8688, 151.2093],
+    "Melbourne": [-37.8136, 144.9631],
+    "Brisbane": [-27.4698, 153.0251],
+    "Auckland": [-36.8485, 174.7633],
+    "Wellington": [-41.2865, 174.7762],
+    "Buenos Aires": [-34.6037, -58.3816],
+    "Santiago": [-33.4489, -70.6693],
+    "Lima": [-12.0464, -77.0428],
+    "Medellín": [6.2476, -75.5658],
+    "Bogotá": [4.7110, -74.0721],
+    "Quito": [-0.1807, -78.4678],
+    "Montevideo": [-34.9011, -56.1645],
+    "Rio de Janeiro": [-22.9068, -43.1729],
+    "São Paulo": [-23.5505, -46.6333],
+    "Florianópolis": [-27.5954, -48.5480],
+    "Marrakesh": [31.6295, -7.9811],
+    "Casablanca": [33.5731, -7.5898],
+    "Tunis": [36.8065, 10.1815],
+    "Ankara": [39.9334, 32.8597],
+    "Tbilisi": [41.7151, 44.8271],
+    "Yerevan": [40.1792, 44.4991],
+    "Almaty": [43.2220, 76.8512],
+    "Baku": [40.4093, 49.8671],
+    "Delhi": [28.7041, 77.1025],
+    "Mumbai": [19.0760, 72.8777],
+    "Bengaluru": [12.9716, 77.5946],
+    "Goa": [15.2993, 74.1240],
+    "Jaipur": [26.9124, 75.7873],
+    "Colombo": [6.9271, 79.8612],
+    "Beijing": [39.9042, 116.4074],
+    "Shanghai": [31.2304, 121.4737],
+    "Shenzhen": [22.5431, 114.0579],
+    "Tehran": [35.6892, 51.3890],
+    "Izmir": [38.4237, 27.1428],
+    "Chania": [35.5138, 24.0180],
+    "Sofia": [42.6977, 23.3219],
+    "Bucharest": [44.4268, 26.1025],
+    "Belgrade": [44.7866, 20.4489],
+    "Zagreb": [45.8150, 15.9819],
+    "Sarajevo": [43.8564, 18.4131],
+    "Madeira": [32.6669, -16.9241],
+    "Las Palmas (Gran Canaria)": [28.1236, -15.4366],
+    "Reykjavik": [64.1466, -21.9426],
+    "Muscat": [23.5880, 58.3829],
+    "Antalya": [36.8969, 30.7133],
+    "Amman": [31.9454, 35.9284],
+    "Beirut": [33.8886, 35.4955],
+    "Faro (Algarve)": [37.0194, -7.9322],
+    "Valletta": [35.8989, 14.5146],
+    "Sousse": [35.8256, 10.6411],
+    "Fes": [34.0181, -5.0078],
+    "Yangon": [16.8661, 96.1951],
+    "Taichung": [24.1477, 120.6736],
+    "Bergen": [60.3913, 5.3221],
+    "Malaga": [36.7213, -4.4214],
+    "Boston": [42.3601, -71.0589],
+    "Philadelphia": [39.9526, -75.1652],
+    "Washington, DC": [38.9072, -77.0369],
+    "San Diego": [32.7157, -117.1611],
+    "San Jose": [37.3382, -121.8863],
+    "Sacramento": [38.5816, -121.4944],
+    "Houston": [29.7604, -95.3698],
+    "Dallas": [32.7767, -96.7970],
+    "San Antonio": [29.4241, -98.4936],
+    "Atlanta": [33.7490, -84.3880],
+    "Charlotte": [35.2271, -80.8431],
+    "Raleigh": [35.7796, -78.6382],
+    "Nashville": [36.1627, -86.7816],
+    "New Orleans": [29.9511, -90.0715],
+    "Orlando": [28.5383, -81.3792],
+    "Tampa": [27.9506, -82.4572],
+    "Pittsburgh": [40.4406, -79.9959],
+    "Detroit": [42.3314, -83.0458],
+    "Minneapolis": [44.9778, -93.2650],
+    "St. Louis": [38.6270, -90.1994],
+    "Kansas City": [39.0997, -94.5786],
+    "Salt Lake City": [40.7608, -111.8910],
+    "Milwaukee": [43.0389, -87.9065],
+    "Columbus": [39.9612, -82.9988],
+    "Cincinnati": [39.1031, -84.5120],
+    "Honolulu": [21.3099, -157.8581],
+    "Portland (Maine)": [43.6591, -70.2568],
+    "San Juan": [18.4655, -66.1057],
+    "Calgary": [51.0447, -114.0719],
+    "Ottawa": [45.4215, -75.6972],
+    "Winnipeg": [49.8951, -97.1384],
+    "Monterrey": [25.6866, -100.3161],
+    "Puebla": [19.0414, -98.2063],
+    "Playa del Carmen": [20.6296, -87.0739],
+    "San Miguel de Allende": [20.9153, -100.7436],
+    "Granada": [37.1773, -3.5986],
+    "Alicante": [38.3452, -0.4810],
+    "Bilbao": [43.2630, -2.9350],
+    "Coimbra": [40.2033, -8.4103],
+    "Braga": [41.5454, -8.4265],
+    "Bologna": [44.4949, 11.3426],
+    "Turin": [45.0703, 7.6869],
+    "Naples": [40.8518, 14.2681],
+    "Palermo": [38.1157, 13.3615],
+    "Nice": [43.7102, 7.2620],
+    "Bordeaux": [44.8378, -0.5792],
+    "Toulouse": [43.6047, 1.4442],
+    "Antwerp": [51.2194, 4.4025],
+    "Ghent": [51.0543, 3.7174],
+    "Lausanne": [46.5197, 6.6323],
+    "Basel": [47.5596, 7.5886],
+    "Vienna": [48.2082, 16.3738],
+    "Salzburg": [47.8095, 13.0550],
+    "Ljubljana": [46.0569, 14.5058],
+    "Gdansk": [54.3520, 18.6466],
+    "Wroclaw": [51.1079, 17.0385],
+    "Cluj-Napoca": [46.7712, 23.6236],
+    "Aarhus": [56.1629, 10.2039],
+    "Trondheim": [63.4305, 10.3951],
+    "Guangzhou": [23.1291, 113.2644],
+    "Chengdu": [30.5728, 104.0668],
+    "Xi'an": [34.3416, 108.9398],
+    "Kunming": [25.0408, 102.7129],
+    "Sanya": [18.2528, 109.5117],
+    "Guiyang": [26.6470, 106.6302],
+    "Nanjing": [32.0603, 118.7969],
+    "Wuhan": [30.5928, 114.3055],
+    "Chiang Rai": [19.9105, 99.8406],
+    "Koh Samui": [9.5354, 100.0633],
+    "Hoi An": [15.8801, 108.3380],
+    "Nha Trang": [12.2388, 109.1967],
+    "Phnom Penh": [11.5564, 104.9282],
+    "Siem Reap": [13.3633, 103.8564],
+    "Vientiane": [17.9757, 102.6331],
+    "Luang Prabang": [19.8845, 102.1350],
+    "Kathmandu": [27.7172, 85.3240],
+    "Pokhara": [28.2096, 83.9856],
+    "Tashkent": [41.2995, 69.2401],
+    "Bishkek": [42.8746, 74.5698],
+    "Ulaanbaatar": [47.8864, 106.9057],
+    "Riyadh": [24.7136, 46.6753],
+    "Jeddah": [21.4858, 39.1925],
+    "Kuwait City": [29.3759, 47.9774],
+    "Manama": [26.2285, 50.5860],
+    "Kigali": [-1.9441, 30.0619],
+    "Dar es Salaam": [-6.7924, 39.2083],
+    "Zanzibar (Stone Town)": [-6.1659, 39.2026],
+    "Windhoek": [-22.5597, 17.0832],
+    "Gaborone": [-24.6282, 25.9231],
+    "Cartagena": [10.3910, -75.4794],
+    "Cali": [3.4516, -76.5320],
+    "Cusco": [-13.5319, -71.9675],
+    "Arequipa": [-16.4090, -71.5375],
+    "La Paz": [-16.5000, -68.1500],
+    "Santa Cruz de la Sierra": [-17.7833, -63.1821],
+    "Asunción": [-25.2637, -57.5759],
+    "Belo Horizonte": [-19.9167, -43.9345],
+    "Curitiba": [-25.4284, -49.2733],
+    "Recife": [-8.0476, -34.8770],
+    "Fortaleza": [-3.7319, -38.5267]
+  };
+
+  // Initialize map
+  const map = L.map('map', {
+    center: [20, 0],
+    zoom: 2,
+    minZoom: 2,
+    maxZoom: 10,
+    worldCopyJump: true
+  });
+
+  // Dark tile layer
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 20
+  }).addTo(map);
+
+  // Add markers for each city
+  Object.entries(cityCoordinates).forEach(([city, coords]) => {
+    const marker = L.circleMarker(coords, {
+      radius: 5,
+      fillColor: '#6aa8ff',
+      color: '#8cffd1',
+      weight: 1,
+      opacity: 0.8,
+      fillOpacity: 0.6
+    }).addTo(map);
+    
+    // Create clickable popup
+    const popupContent = `
+      <div style="text-align: center; padding: 8px; min-width: 180px;">
+        <strong style="color:#0b0e13; font-size: 18px; font-weight: 700; display: block; margin-bottom: 8px;">${city}</strong>
+        <button onclick="openCityModal('${city.replace(/'/g, "\\'")}'); return false;" style="
+          color: #fff;
+          background: linear-gradient(135deg, #6aa8ff 0%, #8cffd1 100%);
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 600;
+          padding: 8px 16px;
+          border-radius: 6px;
+          display: inline-block;
+          transition: transform 0.2s;
+          border: none;
+          cursor: pointer;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          View Cost of Living →
+        </button>
+      </div>
+    `;
+    marker.bindPopup(popupContent);
+    
+    // Add hover effect
+    marker.on('mouseover', function() {
+      this.setStyle({
+        radius: 7,
+        fillOpacity: 1
+      });
+    });
+    
+    marker.on('mouseout', function() {
+      this.setStyle({
+        radius: 5,
+        fillOpacity: 0.6
+      });
+    });
+  });
+}
 </script>
 </body>
 </html>
