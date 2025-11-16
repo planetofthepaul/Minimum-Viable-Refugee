@@ -191,7 +191,7 @@
     color:var(--text);
   }
   .overlay-city{
-    font-size:18px;
+    font-size:22px;
     font-weight:700;
   }
   .overlay-region{
@@ -199,7 +199,7 @@
   }
   .overlay-media{
     position:relative;
-    aspect-ratio:16/8; /* a bit shorter than 16/9 so data is higher on screen */
+    aspect-ratio:16/6; /* shorter hero so data is higher on screen */
     background:#0e1526;
   }
   .overlay-media img{
@@ -224,32 +224,53 @@
   .break-heading{
     font-size:12px;
     color:var(--muted);
-    margin-bottom:6px;
+    margin-bottom:4px;
   }
 
-  .break-grid{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:10px;
+  /* New, simpler breakdown layout */
+  .break-section{
+    margin-top:4px;
   }
-  .metric{
-    background:#0c121f;
-    border:1px solid #1b2742;
-    border-radius:10px;
-    padding:10px;
+  .primary-total{
+    padding:8px 0 10px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:6px;
   }
-  .metric .k{
+  .primary-total .k{
     font-size:11px;
     text-transform:none;
   }
-  .metric .v{
+  .primary-total .v{
     margin-top:4px;
-    font-size:15px;
+    font-size:18px;
   }
-  .metric .sub{
+  .primary-total .sub{
     margin-top:2px;
     font-size:11px;
     color:var(--muted);
+  }
+
+  .break-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  .break-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:4px 0;
+    border-bottom:1px solid #151b26;
+    font-size:13px;
+  }
+  .break-item:last-child{
+    border-bottom:none;
+  }
+  .break-item-label{
+    color:var(--muted);
+  }
+  .break-item-value{
+    font-weight:600;
   }
 
   .city-links{
@@ -310,9 +331,6 @@
     }
     .overlay-body{
       padding:14px;
-    }
-    .break-grid{
-      grid-template-columns:repeat(2,minmax(0,1fr));
     }
   }
 </style>
@@ -524,7 +542,7 @@ async function hydrateImages(){
   }
 }
 
-// Breakdown for overlay: one clear grid
+// Breakdown for overlay: one clear primary total + simple list
 function breakdownHTML(c){
   const total = c._cost;
   const rent = c._rent;
@@ -539,33 +557,35 @@ function breakdownHTML(c){
   const pctLabel = c._pct != null ? `${Math.round(c._pct)}% of your income` : '';
 
   return `
-    <div class="break-heading">Monthly breakdown</div>
-    <div class="break-grid">
-      <div class="metric">
+    <div class="break-section">
+      <div class="break-heading">Monthly breakdown</div>
+      <div class="primary-total">
         <div class="k">${household==="single" ? "Total monthly cost (single)" : "Total monthly cost (two)"}</div>
         <div class="v">${money(total)}/mo</div>
         ${pctLabel ? `<div class="sub">${pctLabel}</div>` : ''}
       </div>
-      <div class="metric">
-        <div class="k">${bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent"}</div>
-        <div class="v">${money(rent)}/mo</div>
-      </div>
-      <div class="metric">
-        <div class="k">Food</div>
-        <div class="v">${money(food)}/mo</div>
-      </div>
-      <div class="metric">
-        <div class="k">Utilities</div>
-        <div class="v">${money(util)}/mo</div>
-      </div>
-      <div class="metric">
-        <div class="k">Transit</div>
-        <div class="v">${money(tran)}/mo</div>
-      </div>
-      <div class="metric">
-        <div class="k">Other</div>
-        <div class="v">${money(other)}/mo</div>
-      </div>
+      <ul class="break-list">
+        <li class="break-item">
+          <span class="break-item-label">${bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent"}</span>
+          <span class="break-item-value">${money(rent)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Food</span>
+          <span class="break-item-value">${money(food)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Utilities</span>
+          <span class="break-item-value">${money(util)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Transit</span>
+          <span class="break-item-value">${money(tran)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Other</span>
+          <span class="break-item-value">${money(other)}/mo</span>
+        </li>
+      </ul>
     </div>
   `;
 }
@@ -640,6 +660,8 @@ function openCityDetail(id, cardEl){
   const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
   const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
 
+  const pctLabel = city._pct != null ? `${Math.round(city._pct)}% of your income` : '';
+
   overlayEl.innerHTML = `
     <div class="overlay-inner">
       <div class="overlay-header">
@@ -647,7 +669,7 @@ function openCityDetail(id, cardEl){
           <button class="overlay-close" type="button" data-close>&times;</button>
           <div>
             <div class="overlay-city">${city.city}, ${city.country}</div>
-            <div class="overlay-region mini">${city.region}</div>
+            <div class="overlay-region mini">${city.region}${pctLabel ? " · " + pctLabel : ""}</div>
           </div>
         </div>
       </div>
@@ -659,8 +681,8 @@ function openCityDetail(id, cardEl){
         <div class="city-links">
           <div class="city-links-title">Quick links</div>
           <ul>
-            <li><a href="${wikiUrl}" target="_blank" rel="noopener">↗ Open Wikipedia</a></li>
-            <li><a href="${mapsUrl}" target="_blank" rel="noopener">↗ Open Google Maps</a></li>
+            <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
+            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
           </ul>
         </div>
       </div>
