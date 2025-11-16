@@ -937,22 +937,6 @@ filterBtnBottom.addEventListener('click', () => {
   const currentlyHidden = controlsEl.classList.contains('is-hidden');
   setFilterHidden(!currentlyHidden);
 });
-  // Detect city from URL hash and open detail card (for map links from About page)
-window.addEventListener('load', function() {
-  const hash = window.location.hash;
-  if (hash.startsWith('#city=')) {
-    const cityName = decodeURIComponent(hash.replace('#city=', ''));
-    // Find the city in LAST_ROWS by name
-    setTimeout(() => {
-      const city = LAST_ROWS.find(c => c.city === cityName);
-      if (city) {
-        openCityDetail(city.id);
-        // Clear the hash
-        history.replaceState(null, null, ' ');
-      }
-    }, 100); // Small delay to ensure data is loaded
-  }
-});
 </script>
 </body>
 </html>
