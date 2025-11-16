@@ -55,7 +55,6 @@
     background:none;
     color:inherit;
   }
-
   .badge img,
   .badge-img {
     width: 26px;
@@ -131,39 +130,8 @@
   .k{font-size:12px;color:var(--muted)}
   .v{margin-top:4px;font-weight:700}
 
-  .details{
-    display:none;
-    border-top:1px solid #1b2742;
-    margin-top:12px;
-    padding-top:12px;
-    font-size:13px;
-    line-height:1.4;
-  }
-  .card.open .details{display:block}
-  .details .mini{font-size:11px;margin-bottom:6px}
-  .details .rows{
-    margin-top:6px;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-  }
-  .details .row{
-    padding:8px 10px;
-  }
-  .details .k{font-size:11px}
-  .details .v{font-size:13px;margin-top:2px}
-  .pill{
-    display:inline-block;
-    background:var(--chip);
-    border:1px solid #223055;
-    border-radius:999px;
-    padding:6px 10px;
-    font-size:12px;
-    margin-right:6px;
-    margin-bottom:6px;
-  }
-
   .city-links{
-    margin-top:10px;
+    margin-top:16px;
     display:flex;
     flex-direction:column;
     gap:4px;
@@ -182,6 +150,95 @@
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
   .sum{font-size:13px;color:var(--muted)}
 
+  /* Full-screen city overlay */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,15,0.96);
+    backdrop-filter:blur(10px);
+    z-index:40;
+    display:none;
+    overflow-y:auto;
+    padding:16px;
+  }
+  .overlay.open{
+    display:block;
+  }
+  .overlay-inner{
+    max-width:900px;
+    margin:0 auto;
+    background:var(--surface);
+    border-radius:16px;
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .overlay-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line);
+    background:rgba(11,14,19,0.9);
+  }
+  .overlay-city{
+    font-size:18px;
+    font-weight:700;
+  }
+  .overlay-region{
+    margin-top:2px;
+  }
+  .overlay-close{
+    border:none;
+    background:#151b29;
+    color:var(--muted);
+    width:32px;
+    height:32px;
+    border-radius:999px;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .overlay-close:hover{
+    background:#1f283a;
+    color:var(--text);
+  }
+  .overlay-media{
+    position:relative;
+    aspect-ratio:16/9;
+    background:#0e1526;
+  }
+  .overlay-media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .chip-overlay{
+    position:absolute;
+    left:14px;
+    bottom:14px;
+  }
+  .overlay-body{
+    padding:16px;
+    display:grid;
+    grid-template-columns:3fr 2fr;
+    gap:16px;
+  }
+  .overlay-summary .row{
+    margin-bottom:8px;
+  }
+  .overlay-text{
+    margin-top:8px;
+  }
+  .overlay-breakdown .mini{
+    margin-bottom:6px;
+  }
+
   @media (max-width:1024px){
     .grid{grid-template-columns:repeat(2,1fr)}
     .f{grid-column:span 6}
@@ -195,50 +252,27 @@
     .title h3{font-size:14px}
     .title .mini{display:none}
 
-    /* Compact top summary rows ONLY (not breakdown) */
     .card > .body > .rows{
       grid-template-columns:1fr;
       gap:8px;
       margin-top:8px;
     }
     .card > .body > .rows .row:nth-child(2){
-      display:none; /* hide rent row to keep card focused on monthly cost */
+      display:none;
     }
     .card > .body > .rows .row .k{
-      display:none; /* hide label, leave just the value */
+      display:none;
     }
     .card > .body > .rows .row .v{
       font-size:14px;
     }
 
-    /* Expanded details: stacked, readable */
-    .card .details{
-      padding-top:10px;
-      margin-top:10px;
-      font-size:13px;
-    }
-    .card .details .rows{
+    .overlay-body{
       grid-template-columns:1fr;
-      gap:8px;
-      margin-top:8px;
     }
-    .card .details .row{
-      padding:8px 10px;
+    .overlay-inner{
+      max-height:none;
     }
-    .card .details .k{
-      display:block;
-      font-size:11px;
-    }
-    .card .details .v{
-      margin-top:2px;
-      font-size:13px;
-    }
-    .pill{
-      font-size:11px;
-      padding:5px 9px;
-    }
-
-    .chip{font-size:10px;padding:4px 8px}
   }
 </style>
 
@@ -329,6 +363,9 @@
 
 <main class="wrap" id="app" aria-live="polite"></main>
 
+<!-- Full-screen city overlay -->
+<aside id="cityOverlay" class="overlay" aria-hidden="true"></aside>
+
 <footer>
   <div class="foot">
     <div class="sum" id="summary">Showing results</div>
@@ -364,6 +401,7 @@ const IMG_CACHE = new Map();
 
 let household = "single";
 let bedrooms  = "1";
+let LAST_ROWS = [];
 
 function currentRent(c){ return bedrooms === "1" ? c.rent1BR : c.rent2BR; }
 
@@ -470,7 +508,6 @@ function breakdownHTML(c){
 
 function card(c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
-  const sd  = (c._surplus!=null) ? (c._surplus>=0 ? `Surplus ${money(c._surplus)}/mo` : `Deficit ${money(Math.abs(c._surplus))}/mo`) : "—";
   const explicitImg = c.image ? c.image : "";
 
   const key = `${c.city}|${c.country}`;
@@ -499,37 +536,16 @@ function card(c){
           <div class="v">${money(c._rent)}/mo</div>
         </div>
       </div>
-      <div class="details">
-        ${breakdownHTML(c)}
-        <div style="margin-top:10px">
-          <span class="pill">Household: ${household==="single"?"Single":"Two"}</span>
-          <span class="pill">Bedrooms: ${bedrooms}</span>
-          <span class="pill">${sd}</span>
-        </div>
-        <div class="city-links">
-          <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(
-            c.city.replace(/ /g, "_")
-          )}"
-             target="_blank" rel="noopener">
-            Open Wikipedia
-          </a>
-          <a href="https://www.google.com/maps/search/${encodeURIComponent(
-            c.city + ', ' + c.country
-          )}"
-             target="_blank" rel="noopener">
-            Open Google Maps
-          </a>
-        </div>
-      </div>
     </div>
   </article>`;
 }
 
 function render(){
   const app = $("#app");
-  const openIDs = Array.from(document.querySelectorAll(".card.open")).map(c => c.dataset.id);
 
   const rows = computeRows();
+  LAST_ROWS = rows;
+
   if(!rows.length){
     app.innerHTML = `<div class="empty">No results. Clear search or adjust inputs.</div>`;
     $("#summary").textContent = "Showing 0 cities";
@@ -538,38 +554,98 @@ function render(){
   app.innerHTML = `<section class="grid">${rows.map(card).join("")}</section>`;
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
 
-  openIDs.forEach(id => {
-    const el = app.querySelector(`.card[data-id="${id}"]`);
-    if (el) el.classList.add("open");
-  });
-
   hydrateImages();
 }
 
-// --- Row-based expansion: expand/collapse all cards in same visual row ---
-function toggleRowCards(cardEl){
-  const grid = cardEl.closest('.grid');
-  if(!grid){
-    cardEl.classList.toggle('open');
-    return;
-  }
+// -------- Full-screen overlay logic --------
+const overlayEl = document.getElementById('cityOverlay');
 
-  const cards = Array.from(grid.querySelectorAll('.card'));
-  const clickedTop = cardEl.offsetTop;
-  const isOpening = !cardEl.classList.contains('open');
-
-  cards.forEach(c => {
-    if (Math.abs(c.offsetTop - clickedTop) < 5) {
-      // same visual row (within a few pixels)
-      c.classList.toggle('open', isOpening);
-    }
-  });
+function closeCityDetail(){
+  overlayEl.classList.remove('open');
+  overlayEl.setAttribute('aria-hidden','true');
+  overlayEl.innerHTML = '';
+  document.body.style.overflow = '';
 }
 
+function openCityDetail(id, cardEl){
+  const city = LAST_ROWS.find(c => String(c.id) === String(id));
+  if(!city) return;
+
+  const imgEl = cardEl.querySelector('img');
+  const imgSrc = imgEl ? imgEl.src : '';
+  const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
+
+  const pctLabel = city._pct!=null ? `${Math.round(city._pct)}% of your income` : `Total: ${money(city._cost)}/mo`;
+  let surplusLine = '';
+  if(city._surplus != null){
+    surplusLine = city._surplus >= 0
+      ? `You’d have ${money(city._surplus)} left each month.`
+      : `You’d be short ${money(Math.abs(city._surplus))} each month.`;
+  }
+
+  overlayEl.innerHTML = `
+    <div class="overlay-inner">
+      <div class="overlay-header">
+        <div>
+          <div class="overlay-city">${city.city}, ${city.country}</div>
+          <div class="overlay-region mini">${city.region}</div>
+        </div>
+        <button class="overlay-close" type="button" data-close>&times;</button>
+      </div>
+      <div class="overlay-media">
+        <img src="${imgSrc}" alt="${city.city}, ${city.country}">
+        <div class="chip chip-overlay">${pctLabel}</div>
+      </div>
+      <div class="overlay-body">
+        <div class="overlay-summary">
+          <div class="row">
+            <div class="k">${household==="single" ? "Monthly cost (single)" : "Monthly cost (two)"}</div>
+            <div class="v">${money(city._cost)}/mo</div>
+          </div>
+          <div class="row">
+            <div class="k">${bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent"}</div>
+            <div class="v">${money(city._rent)}/mo</div>
+          </div>
+          <div class="overlay-text mini">
+            ${surplusLine}
+          </div>
+        </div>
+        <div class="overlay-breakdown">
+          ${breakdownHTML(city)}
+        </div>
+        <div class="city-links">
+          <a href="${wikiUrl}" target="_blank" rel="noopener">
+            Open Wikipedia
+          </a>
+          <a href="${mapsUrl}" target="_blank" rel="noopener">
+            Open Google Maps
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlayEl.classList.add('open');
+  overlayEl.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+
+  const closeBtn = overlayEl.querySelector('[data-close]');
+  if(closeBtn){
+    closeBtn.addEventListener('click', closeCityDetail);
+  }
+}
+
+// Click to open overlay
 window.addEventListener("click", (e)=>{
   const cardEl = e.target.closest(".card");
-  if(cardEl){ toggleRowCards(cardEl); }
+  if(cardEl && !overlayEl.contains(e.target)){
+    const id = cardEl.dataset.id;
+    openCityDetail(id, cardEl);
+  }
 });
+
+// Filter + inputs
 ["income","search","sort"].forEach(id=>{
   const el = $("#"+id);
   el.addEventListener("input", render);
@@ -603,10 +679,23 @@ $("#btn2BR").addEventListener("click", ()=> {
 document.addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
     const cardEl = document.activeElement.closest?.(".card");
-    if(cardEl){ e.preventDefault(); toggleRowCards(cardEl); }
+    if(cardEl){
+      e.preventDefault();
+      openCityDetail(cardEl.dataset.id, cardEl);
+    }
+  }
+  if(e.key==="Escape" && overlayEl.classList.contains('open')){
+    closeCityDetail();
   }
   if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
     e.preventDefault(); $("#search").focus();
+  }
+});
+
+// Close overlay when clicking backdrop
+overlayEl.addEventListener('click', (e)=>{
+  if(e.target === overlayEl){
+    closeCityDetail();
   }
 });
 
