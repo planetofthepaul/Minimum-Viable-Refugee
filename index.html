@@ -727,4 +727,123 @@ function openCityDetail(id, cardEl){
         <div class="overlay-header-left">
           <button class="overlay-close" type="button" data-close>&times;</button>
           <div>
-            <div class="overlay-city">${city.city}, ${city.country
+            <div class="overlay-city">${city.city}, ${city.country}</div>
+            <div class="overlay-region mini">${city.region}${pctLabel ? " · " + pctLabel : ""}</div>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-media">
+        <img src="${imgSrc}" alt="${city.city}, ${city.country}">
+      </div>
+      <div class="overlay-body">
+        ${breakdownHTML(city)}
+        <div class="city-links">
+          <div class="city-links-title">Quick links</div>
+          <ul>
+            <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
+            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlayEl.classList.add('open');
+  overlayEl.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+
+  const closeBtn = overlayEl.querySelector('[data-close]');
+  if(closeBtn){
+    closeBtn.addEventListener('click', closeCityDetail);
+  }
+}
+
+// Click to open overlay
+window.addEventListener("click", (e)=>{
+  const cardEl = e.target.closest(".card");
+  if(cardEl && !overlayEl.contains(e.target)){
+    const id = cardEl.dataset.id;
+    openCityDetail(id, cardEl);
+  }
+});
+
+// Filter + inputs
+["income","search","sort"].forEach(id=>{
+  const el = $("#"+id);
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+});
+$("#btnSingle").addEventListener("click", ()=> {
+  household="single";
+  $("#btnSingle").setAttribute("aria-pressed","true");
+  $("#btnTwo").setAttribute("aria-pressed","false");
+  render();
+});
+$("#btnTwo").addEventListener("click", ()=> {
+  household="two";
+  $("#btnSingle").setAttribute("aria-pressed","false");
+  $("#btnTwo").setAttribute("aria-pressed","true");
+  render();
+});
+$("#btn1BR").addEventListener("click", ()=> {
+  bedrooms="1";
+  $("#btn1BR").setAttribute("aria-pressed","true");
+  $("#btn2BR").setAttribute("aria-pressed","false");
+  render();
+});
+$("#btn2BR").addEventListener("click", ()=> {
+  bedrooms="2";
+  $("#btn1BR").setAttribute("aria-pressed","false");
+  $("#btn2BR").setAttribute("aria-pressed","true");
+  render();
+});
+
+document.addEventListener("keydown", (e)=>{
+  if(e.key==="Enter"){
+    const cardEl = document.activeElement.closest?.(".card");
+    if(cardEl){
+      e.preventDefault();
+      openCityDetail(cardEl.dataset.id, cardEl);
+    }
+  }
+  if(e.key==="Escape" && overlayEl.classList.contains('open')){
+    closeCityDetail();
+  }
+  if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
+    e.preventDefault(); $("#search").focus();
+  }
+});
+
+// Close overlay when clicking backdrop
+overlayEl.addEventListener('click', (e)=>{
+  if(e.target === overlayEl){
+    closeCityDetail();
+  }
+});
+
+// --- Filter toggles: top pill + bottom button, synced ---
+const controlsEl = document.querySelector('.controls');
+const filterBtnTop = document.getElementById('filterToggleTop');
+const filterBtnBottom = document.getElementById('filterToggleBottom');
+
+function setFilterHidden(hidden){
+  controlsEl.classList.toggle('is-hidden', hidden);
+  const label = hidden ? 'Show filters' : 'Hide filters';
+  [filterBtnTop, filterBtnBottom].forEach(btn => {
+    if(!btn) return;
+    btn.textContent = label;
+    btn.setAttribute('aria-expanded', String(!hidden));
+  });
+}
+
+filterBtnTop.addEventListener('click', () => {
+  const currentlyHidden = controlsEl.classList.contains('is-hidden');
+  setFilterHidden(!currentlyHidden);
+});
+filterBtnBottom.addEventListener('click', () => {
+  const currentlyHidden = controlsEl.classList.contains('is-hidden');
+  setFilterHidden(!currentlyHidden);
+});
+</script>
+</body>
+</html>
