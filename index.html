@@ -664,6 +664,31 @@ function createCardElement(c){
   return article;
 }
 
+function createAdCard(ad){
+  const article = document.createElement('article');
+  article.className = 'card';
+  article.dataset.isAd = 'true';
+  article.style.cursor = 'pointer';
+  
+  article.innerHTML = `
+    <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
+      <div class="img">
+        <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" />
+        <div class="chip" style="background:rgba(138,255,209,.15);border-color:#8cffd1;color:#8cffd1;">${ad.label}</div>
+      </div>
+      <div class="body">
+        <div class="title">
+          <h3 style="font-size:16px;">${ad.title}</h3>
+        </div>
+        <div style="margin-top:8px;font-size:13px;color:var(--muted);line-height:1.4;">
+          ${ad.description}
+        </div>
+      </div>
+    </a>`;
+  
+  return article;
+}
+
 function updateCardElement(cardEl, c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
   
@@ -696,37 +721,70 @@ function render(){
     app.appendChild(gridEl);
   }
   
-  // Build map of what should be displayed
-  const currentIds = new Set(rows.map(c => String(c.id)));
+  // Build array of items (cities + ads) by inserting ads at specific positions
+  const items = [];
+  let cityIndex = 0;
+  let position = 1;
   
-  // Remove cards that shouldn't be shown
-  Array.from(gridEl.children).forEach(cardEl => {
-    if (!currentIds.has(cardEl.dataset.id)) {
-      CITY_ELEMENTS.delete(cardEl.dataset.id);
-      cardEl.remove();
+  while (cityIndex < rows.length || position <= Math.max(ADS.card1.position, ADS.card2.position)) {
+    // Check if an ad should be placed at this position
+    if (ADS.card1.enabled && position === ADS.card1.position) {
+      items.push({ type: 'ad', data: ADS.card1, id: 'ad-card1' });
+    } else if (ADS.card2.enabled && position === ADS.card2.position) {
+      items.push({ type: 'ad', data: ADS.card2, id: 'ad-card2' });
+    } else if (cityIndex < rows.length) {
+      // Place a city card
+      items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
+      cityIndex++;
+    }
+    position++;
+    
+    // Safety break
+    if (position > 1000) break;
+  }
+  
+  // Build set of current IDs
+  const currentIds = new Set(items.map(item => item.id));
+  
+  // Remove elements that shouldn't be shown
+  Array.from(gridEl.children).forEach(el => {
+    const elId = el.dataset.isAd === 'true' ? el.dataset.adId : el.dataset.id;
+    if (!currentIds.has(elId)) {
+      if (el.dataset.isAd !== 'true') {
+        CITY_ELEMENTS.delete(elId);
+      }
+      el.remove();
     }
   });
   
-  // Add or update cards
-  rows.forEach((c, index) => {
-    const id = String(c.id);
-    let cardEl = CITY_ELEMENTS.get(id);
+  // Add or update items
+  items.forEach((item, index) => {
+    let element;
     
-    if (!cardEl) {
-      // Create new card element
-      cardEl = createCardElement(c);
-      CITY_ELEMENTS.set(id, cardEl);
+    if (item.type === 'ad') {
+      // Check if ad card already exists
+      element = gridEl.querySelector(`[data-ad-id="${item.id}"]`);
+      if (!element) {
+        element = createAdCard(item.data);
+        element.dataset.adId = item.id;
+      }
     } else {
-      // Update existing card
-      updateCardElement(cardEl, c);
+      // City card
+      element = CITY_ELEMENTS.get(item.id);
+      if (!element) {
+        element = createCardElement(item.data);
+        CITY_ELEMENTS.set(item.id, element);
+      } else {
+        updateCardElement(element, item.data);
+      }
     }
     
     // Ensure correct position in grid
-    if (gridEl.children[index] !== cardEl) {
+    if (gridEl.children[index] !== element) {
       if (index >= gridEl.children.length) {
-        gridEl.appendChild(cardEl);
+        gridEl.appendChild(element);
       } else {
-        gridEl.insertBefore(cardEl, gridEl.children[index]);
+        gridEl.insertBefore(element, gridEl.children[index]);
       }
     }
   });
@@ -777,6 +835,7 @@ function openCityDetail(id, cardEl){
             <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
           </ul>
         </div>
+        ${ADS.overlayBanner.enabled ? ADS.overlayBanner.html : ''}
       </div>
     </div>
   `;
@@ -795,6 +854,10 @@ function openCityDetail(id, cardEl){
 window.addEventListener("click", (e)=>{
   const cardEl = e.target.closest(".card");
   if(cardEl && !overlayEl.contains(e.target)){
+    // Don't open overlay for ad cards
+    if (cardEl.dataset.isAd === 'true') {
+      return;
+    }
     const id = cardEl.dataset.id;
     openCityDetail(id, cardEl);
   }
