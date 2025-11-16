@@ -661,14 +661,7 @@ function createCardElement(c){
   return article;
 }
 
-function createAdCard(ad){
-  const article = document.createElement('article');
-  article.className = 'card';
-  article.dataset.isAd = 'true';
-  article.style.cursor = 'pointer';
-  
-  article.innerHTML = `
-    <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
+:100%;">
       <div class="img" style="background:#ffffff;">
         <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" style="object-fit:contain;padding:20px;" />
         <div class="chip" style="background:rgba(10,16,28,.95);border-color:#8cffd1;color:#8cffd1;">${ad.label}</div>
