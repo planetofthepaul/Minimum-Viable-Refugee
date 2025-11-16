@@ -199,7 +199,7 @@
   }
   .overlay-media{
     position:relative;
-    aspect-ratio:16/6; /* shorter hero so data is higher on screen */
+    aspect-ratio:16/6; /* shorter hero */
     background:#0e1526;
   }
   .overlay-media img{
@@ -207,14 +207,6 @@
     height:100%;
     object-fit:cover;
     display:block;
-  }
-  .chip-overlay{
-    position:absolute;
-    top:12px;
-    left:12px;
-    border-radius:999px;
-    padding:6px 12px;
-    font-size:12px;
   }
 
   .overlay-body{
@@ -227,7 +219,7 @@
     margin-bottom:4px;
   }
 
-  /* New, simpler breakdown layout */
+  /* Simple breakdown layout */
   .break-section{
     margin-top:4px;
   }
@@ -238,7 +230,6 @@
   }
   .primary-total .k{
     font-size:11px;
-    text-transform:none;
   }
   .primary-total .v{
     margin-top:4px;
@@ -437,7 +428,11 @@
 let CITIES = [];
 fetch('cities.json')
   .then(r => r.json())
-  .then(data => { CITIES = data; render(); })
+  .then(async data => {
+    CITIES = data;
+    await preloadImages();   // load each city's image once
+    render();
+  })
   .catch(err => {
     console.error('Failed to load cities.json', err);
     document.querySelector('#app').innerHTML =
@@ -521,25 +516,20 @@ async function resolveCityImage(city, country, explicit){
   return src;
 }
 
-async function hydrateImages(){
-  const cards = Array.from(document.querySelectorAll('.card'));
-  for (const el of cards){
-    const img = el.querySelector('img[data-loaded="false"]');
-    if(!img) continue;
-
-    const city = el.dataset.city;
-    const country = el.dataset.country;
-    const explicit = el.dataset.explicit && el.dataset.explicit !== 'null' ? el.dataset.explicit : null;
-
-    try{
-      const src = await resolveCityImage(city, country, explicit);
-      img.src = src || FALLBACK_IMG;
-    }catch(e){
-      img.src = FALLBACK_IMG;
+// Preload images ONCE so filters don't re-trigger loading
+async function preloadImages(){
+  const promises = CITIES.map(async c => {
+    const key = `${c.city}|${c.country}`;
+    if(c.image){
+      IMG_CACHE.set(key, c.image);
+      c._img = c.image;
+    }else{
+      const src = await resolveCityImage(c.city, c.country, null);
+      IMG_CACHE.set(key, src);
+      c._img = src;
     }
-    img.setAttribute('data-loaded','true');
-    img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
-  }
+  });
+  await Promise.all(promises);
 }
 
 // Breakdown for overlay: one clear primary total + simple list
@@ -592,17 +582,12 @@ function breakdownHTML(c){
 
 function card(c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
-  const explicitImg = c.image ? c.image : "";
-
-  const key = `${c.city}|${c.country}`;
-  const cachedImg = IMG_CACHE.get(key);
-  const imgSrc = cachedImg || '';
-  const dataLoaded = cachedImg ? 'true' : 'false';
+  const imgSrc = c._img || FALLBACK_IMG;
 
   return `
-  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" data-explicit="${explicitImg}" tabindex="0" aria-label="${c.city}, ${c.country}">
+  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" tabindex="0" aria-label="${c.city}, ${c.country}">
     <div class="img">
-      <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" data-loaded="${dataLoaded}" />
+      <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" />
       <div class="chip">${top}</div>
     </div>
     <div class="body">
@@ -637,8 +622,6 @@ function render(){
   }
   app.innerHTML = `<section class="grid">${rows.map(card).join("")}</section>`;
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
-
-  hydrateImages();
 }
 
 // -------- Full-screen overlay logic --------
@@ -655,8 +638,7 @@ function openCityDetail(id, cardEl){
   const city = LAST_ROWS.find(c => String(c.id) === String(id));
   if(!city) return;
 
-  const imgEl = cardEl.querySelector('img');
-  const imgSrc = imgEl ? imgEl.src : '';
+  const imgSrc = city._img || FALLBACK_IMG;
   const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
   const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
 
