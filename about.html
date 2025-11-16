@@ -522,13 +522,42 @@ fetch('cities.json')
 
 const money = x => `$${Math.round(x).toLocaleString()}`;
 
-function openCityModal(cityName) {
+const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900">
+    <rect width="100%" height="100%" fill="#0e1526"/>
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          fill="#2a3654" font-family="system-ui, sans-serif" font-size="36">Loading image...</text>
+  </svg>
+`);
+
+async function wikiThumbActionAPI(title){
+  const url = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original|thumbnail&pithumbsize=1280&titles=${encodeURIComponent(title)}&origin=*`;
+  const r = await fetch(url);
+  if(!r.ok) return null;
+  const j = await r.json();
+  const pages = j?.query?.pages || {};
+  const first = Object.values(pages)[0];
+  if(!first) return null;
+  return first.original?.source || first.thumbnail?.source || null;
+}
+
+async function getCityImage(city, country) {
+  let src = await wikiThumbActionAPI(`${city}, ${country}`);
+  if(!src) src = await wikiThumbActionAPI(city);
+  if(!src) src = FALLBACK_IMG;
+  return src;
+}
+
+async function openCityModal(cityName) {
   const city = CITIES.find(c => c.city === cityName);
   if (!city) return;
   
   const overlayEl = document.getElementById('cityOverlay');
   const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
   const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
+  
+  // Get city image
+  const imgSrc = await getCityImage(city.city, city.country);
   
   // Use default income of $6000 for calculations
   const income = 6000;
@@ -556,7 +585,7 @@ function openCityModal(cityName) {
         </div>
       </div>
       <div class="overlay-media">
-        <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=2000" alt="${city.city}">
+        <img src="${imgSrc}" alt="${city.city}, ${city.country}">
       </div>
       <div class="overlay-body">
         <div class="break-section">
