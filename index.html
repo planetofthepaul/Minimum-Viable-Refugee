@@ -30,7 +30,6 @@
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" href="logo-mve.png">
-
 <style>
   :root{
     --bg:#0b0e13; --surface:#0f1420; --text:#eaf1ff; --muted:#a9b3c7;
@@ -119,25 +118,10 @@
     cursor:pointer;
     display:flex;
     flex-direction:column;
-    transition:transform .1s ease-out, box-shadow .1s ease-out, border-color .1s ease-out;
-  }
-  .card:hover{
-    transform:translateY(-2px);
-    box-shadow:0 16px 30px rgba(0,0,0,.5);
-    border-color:#263968;
   }
   .img{aspect-ratio:16/9;background:#0e1526;position:relative}
   .img img{width:100%;height:100%;object-fit:cover;display:block}
-  .chip{
-    position:absolute;
-    left:10px;
-    top:10px;
-    background:rgba(10,16,28,.9);
-    border:1px solid #1f2b46;
-    border-radius:999px;
-    padding:6px 10px;
-    font-size:12px;
-  }
+  .chip{position:absolute;left:10px;top:10px;background:rgba(10,16,28,.8);border:1px solid #1f2b46;border-radius:999px;padding:6px 10px;font-size:12px}
   .body{padding:14px}
   .title{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .title h3{margin:0;font-size:18px}
@@ -151,129 +135,157 @@
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
   .sum{font-size:13px;color:var(--muted)}
 
-  /* Fullscreen city overlay */
-  body.overlay-open{
-    overflow:hidden;
-  }
+  /* Full-screen city overlay */
   .overlay{
     position:fixed;
     inset:0;
-    background:rgba(5,8,15,0.92);
-    backdrop-filter:blur(14px);
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    padding:24px 16px;
-    z-index:100;
+    background:rgba(5,8,15,0.96);
+    backdrop-filter:blur(10px);
+    z-index:40;
+    display:none;
+    overflow-y:auto;
+    padding:16px;
   }
-  .overlay[hidden]{display:none;}
+  .overlay.open{
+    display:block;
+  }
   .overlay-inner{
-    width:100%;
-    max-width:720px;
-    background:var(--card);
-    border-radius:18px;
+    max-width:900px;
+    margin:0 auto;
+    background:var(--surface);
+    border-radius:16px;
     border:1px solid var(--line);
     box-shadow:var(--shadow);
     overflow:hidden;
+    display:flex;
+    flex-direction:column;
   }
-  .overlay-top-bar{
+  .overlay-header{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:10px 14px 0;
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    background:rgba(11,14,19,0.92);
+  }
+  .overlay-header-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
   }
   .overlay-close{
     border:none;
-    background:transparent;
+    background:#151b29;
     color:var(--muted);
+    width:30px;
+    height:30px;
+    border-radius:999px;
+    font-size:18px;
     cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .overlay-close:hover{
+    background:#1f283a;
+    color:var(--text);
+  }
+  .overlay-city{
     font-size:22px;
-    line-height:1;
-    padding:4px;
+    font-weight:700;
   }
-  .overlay-img{
-    width:100%;
-    max-height:220px;
-    overflow:hidden;
-    border-radius:14px;
-    margin:8px 14px 0;
+  .overlay-region{
+    margin-top:2px;
   }
-  .overlay-img img{
+  .overlay-media{
+    position:relative;
+    aspect-ratio:16/6; /* shorter hero */
+    background:#0e1526;
+  }
+  .overlay-media img{
     width:100%;
     height:100%;
     object-fit:cover;
     display:block;
   }
-  .overlay-header{
-    padding:12px 16px 4px;
+
+  .overlay-body{
+    padding:16px 18px 18px;
   }
-  .overlay-header h2{
-    margin:0;
-    font-size:22px;
-  }
-  .overlay-header .subline{
-    margin-top:4px;
-    font-size:13px;
-    color:var(--muted);
-  }
-  .overlay-main-figure{
-    padding:4px 16px 12px;
-  }
-  .overlay-main-figure .label{
+
+  .break-heading{
     font-size:12px;
     color:var(--muted);
+    margin-bottom:4px;
   }
-  .overlay-main-figure .value{
+
+  /* Simple breakdown layout */
+  .break-section{
     margin-top:4px;
-    font-size:22px;
-    font-weight:700;
   }
-  .overlay-main-figure .note{
+  .primary-total{
+    padding:8px 0 10px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:6px;
+  }
+  .primary-total .k{
+    font-size:11px;
+  }
+  .primary-total .v{
     margin-top:4px;
-    font-size:12px;
+    font-size:18px;
+  }
+  .primary-total .sub{
+    margin-top:2px;
+    font-size:11px;
     color:var(--muted);
   }
-  .overlay-breakdown{
-    padding:8px 16px 4px;
-  }
-  .breakdown-list{
+
+  .break-list{
     list-style:none;
     margin:0;
     padding:0;
-    border-radius:12px;
-    background:#0c121f;
-    border:1px solid #1b2742;
   }
-  .breakdown-list li{
+  .break-item{
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    padding:8px 10px;
+    align-items:center;
+    padding:4px 0;
+    border-bottom:1px solid #151b26;
     font-size:13px;
   }
-  .breakdown-list li+li{
-    border-top:1px solid #1b2742;
+  .break-item:last-child{
+    border-bottom:none;
   }
-  .breakdown-list span.label{
+  .break-item-label{
     color:var(--muted);
   }
-  .breakdown-list span.value{
+  .break-item-value{
     font-weight:600;
   }
-  .overlay-links{
-    padding:10px 16px 14px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    border-top:1px solid #1b2742;
-    margin-top:10px;
+
+  .city-links{
+    margin-top:16px;
   }
-  .overlay-links a{
+  .city-links-title{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .city-links ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  .city-links li{
+    margin-bottom:4px;
+  }
+  .city-links a{
     font-size:13px;
     color:var(--brand);
     text-decoration:none;
   }
-  .overlay-links a:hover{
+  .city-links a:hover{
     text-decoration:underline;
   }
 
@@ -290,30 +302,26 @@
     .title h3{font-size:14px}
     .title .mini{display:none}
 
-    /* Compact top summary rows ONLY (not fullscreen) */
     .card > .body > .rows{
       grid-template-columns:1fr;
       gap:8px;
       margin-top:8px;
     }
     .card > .body > .rows .row:nth-child(2){
-      display:none; /* hide rent row to keep card focused on monthly cost */
+      display:none;
     }
     .card > .body > .rows .row .k{
-      display:none; /* hide label, leave just the value */
+      display:none;
     }
     .card > .body > .rows .row .v{
       font-size:14px;
     }
 
     .overlay-inner{
-      border-radius:16px;
+      border-radius:12px;
     }
-    .overlay-header h2{
-      font-size:18px;
-    }
-    .overlay-main-figure .value{
-      font-size:20px;
+    .overlay-body{
+      padding:14px;
     }
   }
 </style>
@@ -405,6 +413,9 @@
 
 <main class="wrap" id="app" aria-live="polite"></main>
 
+<!-- Full-screen city overlay -->
+<aside id="cityOverlay" class="overlay" aria-hidden="true"></aside>
+
 <footer>
   <div class="foot">
     <div class="sum" id="summary">Showing results</div>
@@ -412,40 +423,16 @@
   </div>
 </footer>
 
-<!-- Fullscreen city overlay -->
-<div id="cityOverlay" class="overlay" hidden>
-  <div class="overlay-inner">
-    <div class="overlay-top-bar">
-      <button class="overlay-close" type="button" aria-label="Close city view">&times;</button>
-    </div>
-    <div class="overlay-img">
-      <img id="overlayImg" alt="" />
-    </div>
-    <div class="overlay-header">
-      <h2 id="overlayTitle"></h2>
-      <div class="subline" id="overlaySubline"></div>
-    </div>
-    <div class="overlay-main-figure">
-      <div class="label">Total monthly cost</div>
-      <div class="value" id="overlayTotal"></div>
-      <div class="note" id="overlayNote"></div>
-    </div>
-    <div class="overlay-breakdown">
-      <ul class="breakdown-list" id="overlayBreakdown"></ul>
-    </div>
-    <div class="overlay-links">
-      <a id="overlayWiki" href="#" target="_blank" rel="noopener">Open Wikipedia →</a>
-      <a id="overlayMaps" href="#" target="_blank" rel="noopener">Open Google Maps →</a>
-    </div>
-  </div>
-</div>
-
 <script>
 // ----------------- Data load -----------------
 let CITIES = [];
 fetch('cities.json')
   .then(r => r.json())
-  .then(data => { CITIES = data; render(); })
+  .then(async data => {
+    CITIES = data;
+    await preloadImages();   // load each city's image once
+    render();
+  })
   .catch(err => {
     console.error('Failed to load cities.json', err);
     document.querySelector('#app').innerHTML =
@@ -468,7 +455,7 @@ const IMG_CACHE = new Map();
 
 let household = "single";
 let bedrooms  = "1";
-let lastRows = [];
+let LAST_ROWS = [];
 
 function currentRent(c){ return bedrooms === "1" ? c.rent1BR : c.rent2BR; }
 
@@ -480,16 +467,15 @@ function currentCost(c){
 }
 
 function computeRows(){
-  const rawIncome = +$("#income").value || 0;
-  const income = rawIncome > 0 ? rawIncome : 1; // avoid null pct, always show %
+  const income = +$("#income").value || 0;
   const q = ($("#search").value || "").trim().toLowerCase();
 
   let rows = CITIES.map(c=>{
     const cost = currentCost(c);
     const rent = currentRent(c);
-    const pct = (cost / income) * 100;
-    const surplus = income - cost;
-    return {...c, _cost:cost, _rent:rent, _pct:pct, _surplus:surplus, _income:income};
+    const pct = income>0 ? (cost / income) * 100 : null;
+    const surplus = income>0 ? (income - cost) : null;
+    return {...c, _cost:cost, _rent:rent, _pct:pct, _surplus:surplus};
   });
 
   if(q){
@@ -530,45 +516,78 @@ async function resolveCityImage(city, country, explicit){
   return src;
 }
 
-async function hydrateImages(){
-  const cards = Array.from(document.querySelectorAll('.card'));
-  for (const el of cards){
-    const img = el.querySelector('img[data-loaded="false"]');
-    if(!img) continue;
-
-    const city = el.dataset.city;
-    const country = el.dataset.country;
-    const explicit = el.dataset.explicit && el.dataset.explicit !== 'null' ? el.dataset.explicit : null;
-
-    const key = `${city}|${country}`;
-
-    try{
-      let src = IMG_CACHE.get(key);
-      if(!src){
-        src = await resolveCityImage(city, country, explicit);
-      }
-      img.src = src || FALLBACK_IMG;
-    }catch(e){
-      img.src = FALLBACK_IMG;
+// Preload images ONCE so filters don't re-trigger loading
+async function preloadImages(){
+  const promises = CITIES.map(async c => {
+    const key = `${c.city}|${c.country}`;
+    if(c.image){
+      IMG_CACHE.set(key, c.image);
+      c._img = c.image;
+    }else{
+      const src = await resolveCityImage(c.city, c.country, null);
+      IMG_CACHE.set(key, src);
+      c._img = src;
     }
-    img.setAttribute('data-loaded','true');
-    img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
-  }
+  });
+  await Promise.all(promises);
+}
+
+// Breakdown for overlay: one clear primary total + simple list
+function breakdownHTML(c){
+  const total = c._cost;
+  const rent = c._rent;
+  const remaining = Math.max(0, total - rent);
+
+  const wFood=2, wUtil=1, wTran=1, wOther=2, wSum=6;
+  const food   = Math.round(remaining * (wFood / wSum));
+  const util   = Math.round(remaining * (wUtil / wSum));
+  const tran   = Math.round(remaining * (wTran / wSum));
+  const other  = Math.max(0, total - (rent + food + util + tran));
+
+  const pctLabel = c._pct != null ? `${Math.round(c._pct)}% of your income` : '';
+
+  return `
+    <div class="break-section">
+      <div class="break-heading">Monthly breakdown</div>
+      <div class="primary-total">
+        <div class="k">${household==="single" ? "Total monthly cost (single)" : "Total monthly cost (two)"}</div>
+        <div class="v">${money(total)}/mo</div>
+        ${pctLabel ? `<div class="sub">${pctLabel}</div>` : ''}
+      </div>
+      <ul class="break-list">
+        <li class="break-item">
+          <span class="break-item-label">${bedrooms==="1" ? "1-bedroom rent" : "2-bedroom rent"}</span>
+          <span class="break-item-value">${money(rent)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Food</span>
+          <span class="break-item-value">${money(food)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Utilities</span>
+          <span class="break-item-value">${money(util)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Transit</span>
+          <span class="break-item-value">${money(tran)}/mo</span>
+        </li>
+        <li class="break-item">
+          <span class="break-item-label">Other</span>
+          <span class="break-item-value">${money(other)}/mo</span>
+        </li>
+      </ul>
+    </div>
+  `;
 }
 
 function card(c){
-  const top = `${Math.round(c._pct)}% of income`;
-  const explicitImg = c.image ? c.image : "";
-
-  const key = `${c.city}|${c.country}`;
-  const cachedImg = IMG_CACHE.get(key);
-  const imgSrc = cachedImg || '';
-  const dataLoaded = cachedImg ? 'true' : 'false';
+  const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
+  const imgSrc = c._img || FALLBACK_IMG;
 
   return `
-  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" data-explicit="${explicitImg}" tabindex="0" aria-label="${c.city}, ${c.country}">
+  <article class="card" data-id="${c.id}" data-city="${c.city}" data-country="${c.country}" tabindex="0" aria-label="${c.city}, ${c.country}">
     <div class="img">
-      <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" data-loaded="${dataLoaded}" />
+      <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" />
       <div class="chip">${top}</div>
     </div>
     <div class="body">
@@ -594,7 +613,7 @@ function render(){
   const app = $("#app");
 
   const rows = computeRows();
-  lastRows = rows;
+  LAST_ROWS = rows;
 
   if(!rows.length){
     app.innerHTML = `<div class="empty">No results. Clear search or adjust inputs.</div>`;
@@ -603,107 +622,75 @@ function render(){
   }
   app.innerHTML = `<section class="grid">${rows.map(card).join("")}</section>`;
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
-
-  hydrateImages();
 }
 
-// ---------- Fullscreen overlay logic ----------
-const overlayEl = $("#cityOverlay");
-const overlayImg = $("#overlayImg");
-const overlayTitle = $("#overlayTitle");
-const overlaySubline = $("#overlaySubline");
-const overlayTotal = $("#overlayTotal");
-const overlayNote = $("#overlayNote");
-const overlayBreakdown = $("#overlayBreakdown");
-const overlayWiki = $("#overlayWiki");
-const overlayMaps = $("#overlayMaps");
+// -------- Full-screen overlay logic --------
+const overlayEl = document.getElementById('cityOverlay');
 
-function openCityOverlay(cardEl){
-  if(!cardEl) return;
-  const id = cardEl.dataset.id;
-  const c = lastRows.find(row => String(row.id) === String(id));
-  if(!c) return;
+function closeCityDetail(){
+  overlayEl.classList.remove('open');
+  overlayEl.setAttribute('aria-hidden','true');
+  overlayEl.innerHTML = '';
+  document.body.style.overflow = '';
+}
 
-  const cityLabel = `${c.city}, ${c.country}`;
-  overlayTitle.textContent = cityLabel;
-  overlaySubline.textContent = `${c.region} • ${household==="single"?"Single":"Two"} • ${bedrooms}BR`;
-  overlayTotal.textContent = `${money(c._cost)}/mo`;
-  overlayNote.textContent = `${Math.round(c._pct)}% of your income`;
+function openCityDetail(id, cardEl){
+  const city = LAST_ROWS.find(c => String(c.id) === String(id));
+  if(!city) return;
 
-  // Breakdown numbers (same logic as before)
-  const total = c._cost;
-  const rent = c._rent;
-  const remaining = Math.max(0, total - rent);
-  const wFood=2, wUtil=1, wTran=1, wOther=2, wSum=6;
-  const food   = Math.round(remaining * (wFood / wSum));
-  const util   = Math.round(remaining * (wUtil / wSum));
-  const tran   = Math.round(remaining * (wTran / wSum));
-  const other  = Math.max(0, total - (rent + food + util + tran));
+  const imgSrc = city._img || FALLBACK_IMG;
+  const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
 
-  overlayBreakdown.innerHTML = `
-    <li><span class="label">Rent</span><span class="value">${money(rent)}/mo</span></li>
-    <li><span class="label">Food</span><span class="value">${money(food)}/mo</span></li>
-    <li><span class="label">Utilities</span><span class="value">${money(util)}/mo</span></li>
-    <li><span class="label">Transit</span><span class="value">${money(tran)}/mo</span></li>
-    <li><span class="label">Other</span><span class="value">${money(other)}/mo</span></li>
+  const pctLabel = city._pct != null ? `${Math.round(city._pct)}% of your income` : '';
+
+  overlayEl.innerHTML = `
+    <div class="overlay-inner">
+      <div class="overlay-header">
+        <div class="overlay-header-left">
+          <button class="overlay-close" type="button" data-close>&times;</button>
+          <div>
+            <div class="overlay-city">${city.city}, ${city.country}</div>
+            <div class="overlay-region mini">${city.region}${pctLabel ? " · " + pctLabel : ""}</div>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-media">
+        <img src="${imgSrc}" alt="${city.city}, ${city.country}">
+      </div>
+      <div class="overlay-body">
+        ${breakdownHTML(city)}
+        <div class="city-links">
+          <div class="city-links-title">Quick links</div>
+          <ul>
+            <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
+            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
   `;
 
-  // Image: reuse card's image if present
-  const cardImg = cardEl.querySelector('img');
-  const src = cardImg && cardImg.src ? cardImg.src : FALLBACK_IMG;
-  overlayImg.src = src;
-  overlayImg.alt = cityLabel;
+  overlayEl.classList.add('open');
+  overlayEl.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
 
-  // Links
-  const wikiTitle = c.city.replace(/ /g, "_");
-  overlayWiki.href = `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiTitle)}`;
-  overlayMaps.href = `https://www.google.com/maps/search/${encodeURIComponent(c.city + ', ' + c.country)}`;
-
-  overlayEl.hidden = false;
-  document.body.classList.add('overlay-open');
+  const closeBtn = overlayEl.querySelector('[data-close]');
+  if(closeBtn){
+    closeBtn.addEventListener('click', closeCityDetail);
+  }
 }
 
-function closeCityOverlay(){
-  overlayEl.hidden = true;
-  document.body.classList.remove('overlay-open');
-}
-
-// Click handling: open overlay on card click
+// Click to open overlay
 window.addEventListener("click", (e)=>{
-  if (overlayEl && !overlayEl.hidden && overlayEl === e.target){
-    // click on dark backdrop closes
-    closeCityOverlay();
-    return;
-  }
-
   const cardEl = e.target.closest(".card");
-  if(cardEl){
-    openCityOverlay(cardEl);
+  if(cardEl && !overlayEl.contains(e.target)){
+    const id = cardEl.dataset.id;
+    openCityDetail(id, cardEl);
   }
 });
 
-// Close button
-const closeBtn = overlayEl.querySelector(".overlay-close");
-closeBtn.addEventListener("click", closeCityOverlay);
-
-// Keyboard: Enter to open, Esc to close, "/" to focus search
-document.addEventListener("keydown", (e)=>{
-  if(e.key==="Enter"){
-    const cardEl = document.activeElement.closest?.(".card");
-    if(cardEl){ e.preventDefault(); openCityOverlay(cardEl); }
-  }
-  if(e.key==="Escape"){
-    if(!overlayEl.hidden){
-      e.preventDefault();
-      closeCityOverlay();
-    }
-  }
-  if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
-    e.preventDefault(); $("#search").focus();
-  }
-});
-
-// Filters re-render
+// Filter + inputs
 ["income","search","sort"].forEach(id=>{
   const el = $("#"+id);
   el.addEventListener("input", render);
@@ -732,6 +719,29 @@ $("#btn2BR").addEventListener("click", ()=> {
   $("#btn1BR").setAttribute("aria-pressed","false");
   $("#btn2BR").setAttribute("aria-pressed","true");
   render();
+});
+
+document.addEventListener("keydown", (e)=>{
+  if(e.key==="Enter"){
+    const cardEl = document.activeElement.closest?.(".card");
+    if(cardEl){
+      e.preventDefault();
+      openCityDetail(cardEl.dataset.id, cardEl);
+    }
+  }
+  if(e.key==="Escape" && overlayEl.classList.contains('open')){
+    closeCityDetail();
+  }
+  if(e.key==="/" && !["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){
+    e.preventDefault(); $("#search").focus();
+  }
+});
+
+// Close overlay when clicking backdrop
+overlayEl.addEventListener('click', (e)=>{
+  if(e.target === overlayEl){
+    closeCityDetail();
+  }
 });
 
 // --- Filter toggles: top pill + bottom button, synced ---
