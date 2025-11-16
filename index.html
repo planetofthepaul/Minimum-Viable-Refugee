@@ -661,13 +661,23 @@ function createCardElement(c){
   return article;
 }
 
-:100%;">
-      <div class="img" style="background:#ffffff;">
-        <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" style="object-fit:contain;padding:20px;" />
-        <div class="chip" style="background:rgba(10,16,28,.95);border-color:#8cffd1;color:#8cffd1;">${ad.label}</div>
+function createAdCard(ad){
+  const article = document.createElement('article');
+  article.className = 'card';
+  article.dataset.isAd = 'true';
+  article.style.cursor = 'pointer';
+  
+  article.innerHTML = `
+    <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
+      <div class="img">
+        <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" />
+       <div class="chip" style="background:rgba(10,16,28,.95);border-color:#8cffd1;color:#8cffd1;">${ad.label}</div>
       </div>
       <div class="body">
-        <div style="margin-top:4px;font-size:14px;color:var(--text);line-height:1.5;">
+        <div class="title">
+          <h3 style="font-size:16px;">${ad.title}</h3>
+        </div>
+        <div style="margin-top:8px;font-size:13px;color:var(--muted);line-height:1.4;">
           ${ad.description}
         </div>
       </div>
