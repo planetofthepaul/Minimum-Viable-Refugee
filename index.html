@@ -81,6 +81,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    margin-bottom:0;
   }
   .hero-bg{
     position:absolute;
@@ -112,11 +113,31 @@
     -webkit-text-fill-color:transparent;
     background-clip:text;
   }
+  .hero h1 .cursor{
+    color:var(--brand2);
+    -webkit-text-fill-color:var(--brand2);
+    animation:blink 0.75s step-end infinite;
+    margin-left:2px;
+  }
+  @keyframes blink {
+    50% { opacity:0; }
+  }
   .hero p{
     font-size:clamp(16px, 2vw, 20px);
     color:var(--text);
     margin:0;
-    opacity:0.95;
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .hero p.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+  @keyframes bounceUp {
+    0% { opacity:0; transform:translateY(20px); }
+    60% { opacity:1; transform:translateY(-5px); }
+    100% { opacity:1; transform:translateY(0); }
   }
 
   .filter-toggle{
@@ -145,7 +166,7 @@
     font-weight:600;
   }
 
-  .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;padding:0 16px 18px}
+  .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;padding:32px 16px 18px;background:var(--bg);position:relative}
   .controls.is-hidden{display:none;}
 
   .f{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
@@ -431,8 +452,8 @@
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <h1>Explore Your Next Chapter</h1>
-    <p>Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
+    <h1 id="heroTitle"></h1>
+    <p id="heroSubtitle">Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
   </div>
 </section>
 
@@ -1058,6 +1079,41 @@ filterBtnTop.addEventListener('click', () => {
 filterBtnBottom.addEventListener('click', () => {
   const currentlyHidden = controlsEl.classList.contains('is-hidden');
   setFilterHidden(!currentlyHidden);
+});
+
+// --- Typewriter animation for hero ---
+function typeWriter(element, text, speed = 80) {
+  let i = 0;
+  element.innerHTML = '<span class="cursor">|</span>';
+  
+  function type() {
+    if (i < text.length) {
+      element.innerHTML = text.substring(0, i + 1) + '<span class="cursor">|</span>';
+      i++;
+      setTimeout(type, speed);
+    } else {
+      // Remove cursor after typing is done
+      setTimeout(() => {
+        element.innerHTML = text;
+        // Show subtitle with bounce
+        const subtitle = document.getElementById('heroSubtitle');
+        if (subtitle) {
+          subtitle.style.animation = 'bounceUp 0.6s ease-out forwards';
+          subtitle.style.opacity = '1';
+        }
+      }, 500);
+    }
+  }
+  
+  setTimeout(type, 300);
+}
+
+// Start typewriter on page load
+window.addEventListener('load', () => {
+  const heroTitle = document.getElementById('heroTitle');
+  if (heroTitle) {
+    typeWriter(heroTitle, 'Explore Your Next Chapter', 80);
+  }
 });
 </script>
 </body>
