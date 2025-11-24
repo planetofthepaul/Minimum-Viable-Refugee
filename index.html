@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 
 <!-- Primary Meta Tags -->
-<title>Minimum Viable Expat - Compare Cost of Living in 240+ Cities Worldwide</title>
+<title>Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide</title>
 <meta name="title" content="Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide" />
 <meta name="description" content="Calculate how livable cities are based on your income. Compare rent, living costs, and affordability across 170+ cities worldwide for singles and couples." />
 <meta name="keywords" content="cost of living, city comparison, rent calculator, expat, digital nomad, relocation, affordable cities, living expenses" />
@@ -541,20 +541,19 @@ const ADS = {
   card2: {
     enabled: true,
     position: 12,
-    title: "Placeholder for now",
-    image: "n.png",
-    description: "Coming soon",
-    link: "https://example.com",
-    label: "Coming Soon"
+    title: "Learn the Language",
+    image: "duolingo-placeholder.png",
+    description: "Start learning before you go. Free lessons in 40+ languages to help you connect with locals.",
+    link: "https://www.duolingo.com",
+    label: "Language Learning"
   },
   overlayBanner: {
     enabled: true,
     html: `
       <div style="margin-top:20px;padding:16px;background:#0c121f;border:1px solid #1b2742;border-radius:10px;text-align:center;">
-        <div style="font-size:11px;color:#6b7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Sponsored</div>
-        <a href="https://example.com" target="_blank" rel="noopener" style="color:var(--brand2);text-decoration:none;font-size:14px;">
-          Your Message Here - 728x90 or Custom
-        </a>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+          💡 Tip: Cost of living data represents city-wide averages. Prices vary significantly by neighborhood and lifestyle choices.
+        </div>
       </div>
     `
   }
@@ -1015,7 +1014,7 @@ render = function() {
         
         const badge = document.createElement('div');
         badge.className = 'first-card-badge';
-        badge.textContent = '👉 Tap to explore';
+        badge.textContent = '👉 Click to explore';
         firstCard.style.position = 'relative';
         firstCard.appendChild(badge);
         
