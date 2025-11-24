@@ -1112,55 +1112,46 @@ filterBtnBottom.addEventListener('click', () => {
 });
 
 // --- First card onboarding tooltip ---
-let onboardingShown = false;
+let tooltipAdded = false;
 
-function showOnboardingTooltip() {
-  // Check if user has seen it before
-  if (sessionStorage.getItem('mve_onboarding_seen')) return;
-  if (onboardingShown) return;
+// Hook into render to add tooltip after cards are definitely rendered
+const originalRenderFunction = render;
+render = function() {
+  originalRenderFunction();
   
-  const firstCard = document.querySelector('.card:not([data-is-ad="true"]):not([data-is-divider="true"])');
-  if (!firstCard) {
-    // Try again in a moment if cards aren't loaded yet
-    setTimeout(showOnboardingTooltip, 200);
-    return;
+  // Only add tooltip once and if not seen before
+  if (!tooltipAdded && !sessionStorage.getItem('mve_onboarding_seen')) {
+    setTimeout(() => {
+      const firstCard = document.querySelector('.card:not([data-is-ad="true"]):not([data-is-divider="true"])');
+      
+      if (firstCard && !firstCard.querySelector('.onboarding-tooltip')) {
+        tooltipAdded = true;
+        firstCard.classList.add('has-tooltip');
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'onboarding-tooltip';
+        tooltip.innerHTML = '<span class="emoji">👆</span> Click to see full details';
+        firstCard.appendChild(tooltip);
+        
+        const removeTooltip = () => {
+          if (tooltip && tooltip.parentNode) {
+            tooltip.remove();
+            firstCard.classList.remove('has-tooltip');
+            sessionStorage.setItem('mve_onboarding_seen', 'true');
+          }
+        };
+        
+        // Remove on any card click
+        document.querySelectorAll('.card:not([data-is-ad="true"])').forEach(card => {
+          card.addEventListener('click', removeTooltip, { once: true });
+        });
+        
+        // Auto-remove after 10 seconds
+        setTimeout(removeTooltip, 10000);
+      }
+    }, 200);
   }
-  
-  onboardingShown = true;
-  firstCard.classList.add('has-tooltip');
-  
-  const tooltip = document.createElement('div');
-  tooltip.className = 'onboarding-tooltip';
-  tooltip.innerHTML = '<span class="emoji">👆</span> Click to see full details';
-  firstCard.appendChild(tooltip);
-  
-  // Remove tooltip on any interaction
-  const removeTooltip = () => {
-    if (tooltip.parentNode) {
-      tooltip.remove();
-      firstCard.classList.remove('has-tooltip');
-      sessionStorage.setItem('mve_onboarding_seen', 'true');
-    }
-  };
-  
-  // Remove on click anywhere
-  firstCard.addEventListener('click', removeTooltip, { once: true });
-  
-  // Also remove if user interacts with any other card
-  setTimeout(() => {
-    document.querySelectorAll('.card:not([data-is-ad="true"])').forEach(card => {
-      card.addEventListener('click', removeTooltip, { once: true });
-    });
-  }, 100);
-  
-  // Auto-remove after 12 seconds
-  setTimeout(removeTooltip, 12000);
-}
-
-// Show tooltip after page loads and cities render
-window.addEventListener('load', () => {
-  setTimeout(showOnboardingTooltip, 800);
-});
+};
 </script>
 </body>
 </html>
