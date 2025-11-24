@@ -113,12 +113,6 @@
     -webkit-text-fill-color:transparent;
     background-clip:text;
   }
-  .hero h1 .cursor{
-    color:var(--brand2);
-    -webkit-text-fill-color:var(--brand2);
-    animation:blink 0.75s step-end infinite;
-    margin-left:2px;
-  }
   @keyframes blink {
     50% { opacity:0; }
   }
@@ -126,18 +120,54 @@
     font-size:clamp(16px, 2vw, 20px);
     color:var(--text);
     margin:0;
-    opacity:0;
-    transform:translateY(20px);
-    transition:opacity 0.6s ease-out, transform 0.6s ease-out;
-  }
-  .hero p.show{
-    opacity:1;
-    transform:translateY(0);
+    opacity:0.95;
   }
   @keyframes bounceUp {
     0% { opacity:0; transform:translateY(20px); }
     60% { opacity:1; transform:translateY(-5px); }
     100% { opacity:1; transform:translateY(0); }
+  }
+
+  /* First card onboarding tooltip */
+  .onboarding-tooltip{
+    position:absolute;
+    top:-60px;
+    left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%);
+    color:var(--bg);
+    padding:12px 20px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+    box-shadow:0 8px 24px rgba(106,168,255,0.4);
+    z-index:5;
+    animation:tooltipPulse 2s ease-in-out infinite;
+    pointer-events:none;
+  }
+  .onboarding-tooltip::after{
+    content:'';
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    border:8px solid transparent;
+    border-top-color:var(--brand2);
+  }
+  .onboarding-tooltip .emoji{
+    font-size:18px;
+    margin-right:6px;
+  }
+  @keyframes tooltipPulse {
+    0%, 100% { transform:translateX(-50%) translateY(0); }
+    50% { transform:translateX(-50%) translateY(-4px); }
+  }
+  .card.has-tooltip{
+    position:relative;
+  }
+  .card.has-tooltip:hover .onboarding-tooltip{
+    animation:tooltipPulse 0.3s ease-in-out;
   }
 
   .filter-toggle{
@@ -452,8 +482,8 @@
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <h1 id="heroTitle"></h1>
-    <p id="heroSubtitle">Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
+    <h1>Explore Your Next Chapter</h1>
+    <p>Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
   </div>
 </section>
 
@@ -1081,40 +1111,52 @@ filterBtnBottom.addEventListener('click', () => {
   setFilterHidden(!currentlyHidden);
 });
 
-// --- Typewriter animation for hero ---
-function typeWriter(element, text, speed = 80) {
-  let i = 0;
-  element.innerHTML = '<span class="cursor">|</span>';
+// --- First card onboarding tooltip ---
+let hasSeenOnboarding = localStorage.getItem('mve_seen_onboarding') === 'true';
+
+function addOnboardingTooltip() {
+  if (hasSeenOnboarding) return;
   
-  function type() {
-    if (i < text.length) {
-      element.innerHTML = text.substring(0, i + 1) + '<span class="cursor">|</span>';
-      i++;
-      setTimeout(type, speed);
-    } else {
-      // Remove cursor after typing is done
-      setTimeout(() => {
-        element.innerHTML = text;
-        // Show subtitle with bounce
-        const subtitle = document.getElementById('heroSubtitle');
-        if (subtitle) {
-          subtitle.style.animation = 'bounceUp 0.6s ease-out forwards';
-          subtitle.style.opacity = '1';
-        }
-      }, 500);
-    }
-  }
+  const firstCard = document.querySelector('.card:not([data-is-ad="true"])');
+  if (!firstCard) return;
   
-  setTimeout(type, 300);
+  // Don't add if already has tooltip
+  if (firstCard.classList.contains('has-tooltip')) return;
+  
+  firstCard.classList.add('has-tooltip');
+  
+  const tooltip = document.createElement('div');
+  tooltip.className = 'onboarding-tooltip';
+  tooltip.innerHTML = '<span class="emoji">👆</span> Click to see full details';
+  
+  firstCard.appendChild(tooltip);
+  
+  // Remove tooltip after first click anywhere on a card
+  const removeTooltip = () => {
+    tooltip.remove();
+    firstCard.classList.remove('has-tooltip');
+    hasSeenOnboarding = true;
+    localStorage.setItem('mve_seen_onboarding', 'true');
+  };
+  
+  // Remove on any card click
+  document.querySelectorAll('.card:not([data-is-ad="true"])').forEach(card => {
+    card.addEventListener('click', removeTooltip, { once: true });
+  });
+  
+  // Auto-remove after 10 seconds
+  setTimeout(removeTooltip, 10000);
 }
 
-// Start typewriter on page load
-window.addEventListener('load', () => {
-  const heroTitle = document.getElementById('heroTitle');
-  if (heroTitle) {
-    typeWriter(heroTitle, 'Explore Your Next Chapter', 80);
-  }
-});
+// Add tooltip after initial render
+setTimeout(addOnboardingTooltip, 500);
+
+// Re-add tooltip when results change (if user hasn't seen it)
+const originalRender = render;
+render = function() {
+  originalRender.call(this);
+  setTimeout(addOnboardingTooltip, 100);
+};
 </script>
 </body>
 </html>
