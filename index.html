@@ -406,6 +406,7 @@
     <div class="f" style="grid-column:span 4">
       <label for="sort">Sort</label>
       <select id="sort">
+        <option value="editorChoice">Editor's Choice</option>
         <option value="costAsc">Lowest total cost</option>
         <option value="costDesc">Highest total cost</option>
       </select>
@@ -528,10 +529,15 @@ function computeRows(){
 
   const sort = $("#sort").value;
   const sorters = {
+    editorChoice:(a,b)=> {
+      const aRank = a.editorRank || 999;
+      const bRank = b.editorRank || 999;
+      return aRank - bRank;
+    },
     costAsc:(a,b)=> a._cost - b._cost,
     costDesc:(a,b)=> b._cost - a._cost
   };
-  rows.sort(sorters[sort] || sorters.costAsc);
+  rows.sort(sorters[sort] || sorters.editorChoice);
   return rows;
 }
 
