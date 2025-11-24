@@ -532,7 +532,13 @@ function computeRows(){
     editorChoice:(a,b)=> {
       const aRank = a.editorRank || 999;
       const bRank = b.editorRank || 999;
-      return aRank - bRank;
+      // If both have ranks, sort by rank
+      if (aRank !== 999 && bRank !== 999) return aRank - bRank;
+      // If only one has a rank, it comes first
+      if (aRank !== 999) return -1;
+      if (bRank !== 999) return 1;
+      // If neither has a rank, sort by cost
+      return a._cost - b._cost;
     },
     costAsc:(a,b)=> a._cost - b._cost,
     costDesc:(a,b)=> b._cost - a._cost
@@ -692,6 +698,29 @@ function createAdCard(ad){
   return article;
 }
 
+function createDividerElement(){
+  const divider = document.createElement('div');
+  divider.className = 'editor-divider';
+  divider.dataset.isDivider = 'true';
+  divider.style.gridColumn = '1 / -1';
+  divider.style.margin = '20px 0';
+  divider.style.padding = '20px';
+  divider.style.background = 'var(--surface)';
+  divider.style.border = '1px solid var(--line)';
+  divider.style.borderRadius = '12px';
+  divider.style.textAlign = 'center';
+  
+  divider.innerHTML = `
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">
+      ⬆️ Editor's Choice ⬆️
+    </div>
+    <div style="font-size:13px;color:var(--muted);">
+      Below sorted by lowest cost
+    </div>`;
+  
+  return divider;
+}
+
 function updateCardElement(cardEl, c){
   const top = (c._pct!=null) ? `${Math.round(c._pct)}% of income` : `Cost: ${money(c._cost)}/mo`;
   
@@ -729,7 +758,17 @@ function render(){
   let cityIndex = 0;
   let position = 1;
   
+  // Check if we're in Editor's Choice mode
+  const isEditorChoice = $("#sort").value === "editorChoice";
+  let editorChoiceDividerInserted = false;
+  
   while (cityIndex < rows.length || position <= Math.max(ADS.card1.position, ADS.card2.position)) {
+    // Insert divider after position 20 in Editor's Choice mode
+    if (isEditorChoice && !editorChoiceDividerInserted && position === 21) {
+      items.push({ type: 'divider', id: 'editor-choice-divider' });
+      editorChoiceDividerInserted = true;
+    }
+    
     // Check if an ad should be placed at this position
     if (ADS.card1.enabled && position === ADS.card1.position) {
       items.push({ type: 'ad', data: ADS.card1, id: 'ad-card1' });
@@ -751,9 +790,17 @@ function render(){
   
   // Remove elements that shouldn't be shown
   Array.from(gridEl.children).forEach(el => {
-    const elId = el.dataset.isAd === 'true' ? el.dataset.adId : el.dataset.id;
+    let elId;
+    if (el.dataset.isDivider === 'true') {
+      elId = el.dataset.dividerId;
+    } else if (el.dataset.isAd === 'true') {
+      elId = el.dataset.adId;
+    } else {
+      elId = el.dataset.id;
+    }
+    
     if (!currentIds.has(elId)) {
-      if (el.dataset.isAd !== 'true') {
+      if (el.dataset.isAd !== 'true' && el.dataset.isDivider !== 'true') {
         CITY_ELEMENTS.delete(elId);
       }
       el.remove();
@@ -764,7 +811,14 @@ function render(){
   items.forEach((item, index) => {
     let element;
     
-    if (item.type === 'ad') {
+    if (item.type === 'divider') {
+      // Check if divider already exists
+      element = gridEl.querySelector(`[data-divider-id="${item.id}"]`);
+      if (!element) {
+        element = createDividerElement();
+        element.dataset.dividerId = item.id;
+      }
+    } else if (item.type === 'ad') {
       // Check if ad card already exists
       element = gridEl.querySelector(`[data-ad-id="${item.id}"]`);
       if (!element) {
