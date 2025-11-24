@@ -71,6 +71,54 @@
     display: block;
   }
 
+  /* Hero Section */
+  .hero{
+    position:relative;
+    height:60vh;
+    min-height:400px;
+    max-height:600px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .hero-bg{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-image:url('https://images.unsplash.com/photo-1652088241116-5faf85b6c6aa?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    background-size:cover;
+    background-position:center;
+  }
+  .hero-overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(11,14,19,0.3) 0%, rgba(11,14,19,0.8) 100%);
+  }
+  .hero-content{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:24px;
+    max-width:800px;
+  }
+  .hero h1{
+    font-size:clamp(32px, 6vw, 56px);
+    margin:0 0 16px;
+    line-height:1.1;
+    font-weight:800;
+    background:linear-gradient(135deg, var(--brand2) 0%, var(--brand) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .hero p{
+    font-size:clamp(16px, 2vw, 20px);
+    color:var(--text);
+    margin:0;
+    opacity:0.95;
+  }
+
   .filter-toggle{
     display:flex;
     align-items:center;
@@ -355,6 +403,7 @@
 </script>
 </head>
 <body>
+<!-- Top Navigation -->
 <header>
   <div class="h-row wrap">
     <div class="brand">
@@ -375,7 +424,20 @@
       </button>
     </div>
   </div>
+</header>
 
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <h1>Explore Your Next Chapter</h1>
+    <p>Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
+  </div>
+</section>
+
+<!-- Filters Section -->
+<section>
   <div class="controls wrap" role="region" aria-label="Controls">
     <div class="f" style="grid-column:span 4">
       <label for="income">Your monthly income (USD)</label>
@@ -419,7 +481,7 @@
       </button>
     </div>
   </div>
-</header>
+</section>
 
 <main class="wrap" id="app" aria-live="polite"></main>
 
@@ -763,8 +825,8 @@ function render(){
   let editorChoiceDividerInserted = false;
   
   while (cityIndex < rows.length || position <= Math.max(ADS.card1.position, ADS.card2.position)) {
-    // Insert divider after position 20 in Editor's Choice mode
-    if (isEditorChoice && !editorChoiceDividerInserted && position === 21) {
+    // Insert divider after the 20th ranked city (when we've added 20 cities and are about to add the 21st)
+    if (isEditorChoice && !editorChoiceDividerInserted && cityIndex === 20) {
       items.push({ type: 'divider', id: 'editor-choice-divider' });
       editorChoiceDividerInserted = true;
     }
