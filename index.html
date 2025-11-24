@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 
 <!-- Primary Meta Tags -->
-<title>Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide</title>
+<title>Minimum Viable Expat - Compare Cost of Living in 240+ Cities Worldwide</title>
 <meta name="title" content="Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide" />
 <meta name="description" content="Calculate how livable cities are based on your income. Compare rent, living costs, and affordability across 170+ cities worldwide for singles and couples." />
 <meta name="keywords" content="cost of living, city comparison, rent calculator, expat, digital nomad, relocation, affordable cities, living expenses" />
@@ -148,29 +148,6 @@
   @keyframes pulse {
     0%, 100% { transform:scale(1); box-shadow:0 4px 12px rgba(106,168,255,0.4); }
     50% { transform:scale(1.03); box-shadow:0 6px 16px rgba(106,168,255,0.6); }
-  }
-
-  /* Image loading shimmer */
-  .card .img{
-    position:relative;
-    background:var(--surface);
-  }
-  .card .img.loading::before{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:linear-gradient(90deg, var(--surface) 0%, #1a2336 50%, var(--surface) 100%);
-    background-size:200% 100%;
-    animation:shimmer 1.5s infinite;
-    z-index:1;
-  }
-  .card .img img{
-    position:relative;
-    z-index:2;
-  }
-  @keyframes shimmer {
-    0% { background-position:200% 0; }
-    100% { background-position:-200% 0; }
   }
 
   .filter-toggle{
@@ -589,12 +566,10 @@ let CITY_ELEMENTS = new Map(); // Store DOM elements for reuse
 
 fetch('cities.json')
   .then(r => r.json())
-  .then(data => {
+  .then(async data => {
     CITIES = data;
-    // Render cards immediately - images will load progressively
+    await preloadImages();   // load each city's image once
     render();
-    // Preload images in background
-    preloadImages();
   })
   .catch(err => {
     console.error('Failed to load cities.json', err);
@@ -767,7 +742,7 @@ function createCardElement(c){
   article.setAttribute('aria-label', `${c.city}, ${c.country}`);
   
   article.innerHTML = `
-    <div class="img loading">
+    <div class="img">
       <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async" />
       <div class="chip">${top}</div>
     </div>
@@ -787,13 +762,6 @@ function createCardElement(c){
         </div>
       </div>
     </div>`;
-  
-  // Remove shimmer once image loads
-  const img = article.querySelector('img');
-  const imgContainer = article.querySelector('.img');
-  img.addEventListener('load', () => {
-    imgContainer.classList.remove('loading');
-  });
   
   return article;
 }
@@ -1047,7 +1015,7 @@ render = function() {
         
         const badge = document.createElement('div');
         badge.className = 'first-card-badge';
-        badge.textContent = '👉 Click to explore';
+        badge.textContent = '👉 Tap to explore';
         firstCard.style.position = 'relative';
         firstCard.appendChild(badge);
         
