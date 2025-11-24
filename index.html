@@ -1112,51 +1112,55 @@ filterBtnBottom.addEventListener('click', () => {
 });
 
 // --- First card onboarding tooltip ---
-let hasSeenOnboarding = localStorage.getItem('mve_seen_onboarding') === 'true';
+let onboardingShown = false;
 
-function addOnboardingTooltip() {
-  if (hasSeenOnboarding) return;
+function showOnboardingTooltip() {
+  // Check if user has seen it before
+  if (sessionStorage.getItem('mve_onboarding_seen')) return;
+  if (onboardingShown) return;
   
-  const firstCard = document.querySelector('.card:not([data-is-ad="true"])');
-  if (!firstCard) return;
+  const firstCard = document.querySelector('.card:not([data-is-ad="true"]):not([data-is-divider="true"])');
+  if (!firstCard) {
+    // Try again in a moment if cards aren't loaded yet
+    setTimeout(showOnboardingTooltip, 200);
+    return;
+  }
   
-  // Don't add if already has tooltip
-  if (firstCard.classList.contains('has-tooltip')) return;
-  
+  onboardingShown = true;
   firstCard.classList.add('has-tooltip');
   
   const tooltip = document.createElement('div');
   tooltip.className = 'onboarding-tooltip';
   tooltip.innerHTML = '<span class="emoji">👆</span> Click to see full details';
-  
   firstCard.appendChild(tooltip);
   
-  // Remove tooltip after first click anywhere on a card
+  // Remove tooltip on any interaction
   const removeTooltip = () => {
-    tooltip.remove();
-    firstCard.classList.remove('has-tooltip');
-    hasSeenOnboarding = true;
-    localStorage.setItem('mve_seen_onboarding', 'true');
+    if (tooltip.parentNode) {
+      tooltip.remove();
+      firstCard.classList.remove('has-tooltip');
+      sessionStorage.setItem('mve_onboarding_seen', 'true');
+    }
   };
   
-  // Remove on any card click
-  document.querySelectorAll('.card:not([data-is-ad="true"])').forEach(card => {
-    card.addEventListener('click', removeTooltip, { once: true });
-  });
+  // Remove on click anywhere
+  firstCard.addEventListener('click', removeTooltip, { once: true });
   
-  // Auto-remove after 10 seconds
-  setTimeout(removeTooltip, 10000);
+  // Also remove if user interacts with any other card
+  setTimeout(() => {
+    document.querySelectorAll('.card:not([data-is-ad="true"])').forEach(card => {
+      card.addEventListener('click', removeTooltip, { once: true });
+    });
+  }, 100);
+  
+  // Auto-remove after 12 seconds
+  setTimeout(removeTooltip, 12000);
 }
 
-// Add tooltip after initial render
-setTimeout(addOnboardingTooltip, 500);
-
-// Re-add tooltip when results change (if user hasn't seen it)
-const originalRender = render;
-render = function() {
-  originalRender.call(this);
-  setTimeout(addOnboardingTooltip, 100);
-};
+// Show tooltip after page loads and cities render
+window.addEventListener('load', () => {
+  setTimeout(showOnboardingTooltip, 800);
+});
 </script>
 </body>
 </html>
