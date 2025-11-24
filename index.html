@@ -128,46 +128,27 @@
     100% { opacity:1; transform:translateY(0); }
   }
 
-  /* First card onboarding tooltip */
-  .onboarding-tooltip{
+  /* First card pulsating badge */
+  .first-card-badge{
     position:absolute;
-    top:-60px;
-    left:50%;
-    transform:translateX(-50%);
+    top:12px;
+    right:12px;
     background:linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%);
     color:var(--bg);
-    padding:12px 20px;
-    border-radius:12px;
-    font-size:14px;
-    font-weight:600;
-    white-space:nowrap;
-    box-shadow:0 8px 24px rgba(106,168,255,0.4);
-    z-index:5;
-    animation:tooltipPulse 2s ease-in-out infinite;
+    padding:8px 16px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    box-shadow:0 4px 12px rgba(106,168,255,0.5);
+    z-index:3;
+    animation:pulse 2s ease-in-out infinite;
     pointer-events:none;
   }
-  .onboarding-tooltip::after{
-    content:'';
-    position:absolute;
-    top:100%;
-    left:50%;
-    transform:translateX(-50%);
-    border:8px solid transparent;
-    border-top-color:var(--brand2);
-  }
-  .onboarding-tooltip .emoji{
-    font-size:18px;
-    margin-right:6px;
-  }
-  @keyframes tooltipPulse {
-    0%, 100% { transform:translateX(-50%) translateY(0); }
-    50% { transform:translateX(-50%) translateY(-4px); }
-  }
-  .card.has-tooltip{
-    position:relative;
-  }
-  .card.has-tooltip:hover .onboarding-tooltip{
-    animation:tooltipPulse 0.3s ease-in-out;
+  @keyframes pulse {
+    0%, 100% { transform:scale(1); box-shadow:0 4px 12px rgba(106,168,255,0.5); }
+    50% { transform:scale(1.05); box-shadow:0 6px 20px rgba(106,168,255,0.8); }
   }
 
   .filter-toggle{
@@ -1020,39 +1001,41 @@ function openCityDetail(id, cardEl){
   }
 }
 
-// --- First card onboarding tooltip ---
-let tooltipAdded = false;
+// --- First card pulsating badge ---
+let badgeAdded = false;
 const baseRender = render;
 render = function() {
   baseRender();
   
-  if (!tooltipAdded && !sessionStorage.getItem('mve_onboarding_seen')) {
+  if (!badgeAdded && !sessionStorage.getItem('mve_seen_first_card')) {
     setTimeout(() => {
-      const firstCard = document.querySelector('.card[data-id]:not([data-is-ad])');
+      const firstCard = document.querySelector('.card[data-id]');
       
-      if (firstCard && !firstCard.querySelector('.onboarding-tooltip')) {
-        tooltipAdded = true;
+      if (firstCard && !firstCard.querySelector('.first-card-badge')) {
+        badgeAdded = true;
+        
+        const badge = document.createElement('div');
+        badge.className = 'first-card-badge';
+        badge.textContent = 'Click Me!';
         firstCard.style.position = 'relative';
+        firstCard.appendChild(badge);
         
-        const tooltip = document.createElement('div');
-        tooltip.className = 'onboarding-tooltip';
-        tooltip.innerHTML = '<span class="emoji">👆</span> Click to see full details';
-        firstCard.appendChild(tooltip);
-        
-        const removeTooltip = () => {
-          if (tooltip && tooltip.parentNode) {
-            tooltip.remove();
-            sessionStorage.setItem('mve_onboarding_seen', 'true');
+        const removeBadge = () => {
+          if (badge && badge.parentNode) {
+            badge.remove();
+            sessionStorage.setItem('mve_seen_first_card', 'true');
           }
         };
         
+        // Remove on any card click
         document.querySelectorAll('.card[data-id]').forEach(card => {
-          card.addEventListener('click', removeTooltip, { once: true });
+          card.addEventListener('click', removeBadge, { once: true });
         });
         
-        setTimeout(removeTooltip, 10000);
+        // Auto-remove after 8 seconds
+        setTimeout(removeBadge, 8000);
       }
-    }, 100);
+    }, 300);
   }
 };
 
