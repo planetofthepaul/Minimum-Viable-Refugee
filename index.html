@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 
 <!-- Primary Meta Tags -->
-<title>Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide</title>
+<title>Minimum Viable Expat - Compare Cost of Living in 230+ Cities Worldwide</title>
 <meta name="title" content="Minimum Viable Expat - Compare Cost of Living in 170+ Cities Worldwide" />
 <meta name="description" content="Calculate how livable cities are based on your income. Compare rent, living costs, and affordability across 170+ cities worldwide for singles and couples." />
 <meta name="keywords" content="cost of living, city comparison, rent calculator, expat, digital nomad, relocation, affordable cities, living expenses" />
@@ -131,24 +131,23 @@
   /* First card pulsating badge */
   .first-card-badge{
     position:absolute;
-    top:12px;
-    right:12px;
+    top:16px;
+    right:16px;
     background:linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%);
     color:var(--bg);
-    padding:8px 16px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:0.5px;
-    box-shadow:0 4px 12px rgba(106,168,255,0.5);
+    padding:6px 14px;
+    border-radius:16px;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    box-shadow:0 4px 12px rgba(106,168,255,0.4);
     z-index:3;
-    animation:pulse 2s ease-in-out infinite;
+    animation:pulse 2.5s ease-in-out infinite;
     pointer-events:none;
   }
   @keyframes pulse {
-    0%, 100% { transform:scale(1); box-shadow:0 4px 12px rgba(106,168,255,0.5); }
-    50% { transform:scale(1.05); box-shadow:0 6px 20px rgba(106,168,255,0.8); }
+    0%, 100% { transform:scale(1); box-shadow:0 4px 12px rgba(106,168,255,0.4); }
+    50% { transform:scale(1.03); box-shadow:0 6px 16px rgba(106,168,255,0.6); }
   }
 
   .filter-toggle{
@@ -1016,7 +1015,7 @@ render = function() {
         
         const badge = document.createElement('div');
         badge.className = 'first-card-badge';
-        badge.textContent = 'Click Me!';
+        badge.textContent = 'Tap to explore';
         firstCard.style.position = 'relative';
         firstCard.appendChild(badge);
         
@@ -1032,8 +1031,7 @@ render = function() {
           card.addEventListener('click', removeBadge, { once: true });
         });
         
-        // Auto-remove after 8 seconds
-        setTimeout(removeBadge, 8000);
+        // No auto-timeout - only removes when user clicks
       }
     }, 300);
   }
