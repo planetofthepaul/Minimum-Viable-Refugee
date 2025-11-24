@@ -8,7 +8,8 @@
     "rent1BR": 400,
     "rent2BR": 650,
     "costOne": 1200,
-    "costTwo": 1900
+    "costTwo": 1900,
+    "editorRank": 1
   },
   {
     "id": "2",
@@ -19,7 +20,8 @@
     "rent1BR": 1000,
     "rent2BR": 1500,
     "costOne": 2200,
-    "costTwo": 3200
+    "costTwo": 3200,
+    "editorRank": 2
   },
   {
     "id": "new-york-us",
@@ -74,7 +76,8 @@
     "rent1BR": 1700,
     "rent2BR": 2300,
     "costOne": 2700,
-    "costTwo": 4400
+    "costTwo": 4400,
+    "editorRank": 16
   },
   {
     "id": "miami-us",
@@ -173,7 +176,8 @@
     "rent1BR": 900,
     "rent2BR": 1200,
     "costOne": 1800,
-    "costTwo": 2600
+    "costTwo": 2600,
+    "editorRank": 3
   },
   {
     "id": "guadalajara-mx",
@@ -393,7 +397,8 @@
     "rent1BR": 900,
     "rent2BR": 1200,
     "costOne": 1700,
-    "costTwo": 2600
+    "costTwo": 2600,
+    "editorRank": 10
   },
   {
     "id": "seville-es",
@@ -404,7 +409,8 @@
     "rent1BR": 850,
     "rent2BR": 1150,
     "costOne": 1600,
-    "costTwo": 2400
+    "costTwo": 2400,
+    "editorRank": 18
   },
   {
     "id": "lisbon-pt",
@@ -426,7 +432,8 @@
     "rent1BR": 800,
     "rent2BR": 1100,
     "costOne": 1600,
-    "costTwo": 2400
+    "costTwo": 2400,
+    "editorRank": 6
   },
   {
     "id": "rome-it",
@@ -470,7 +477,8 @@
     "rent1BR": 900,
     "rent2BR": 1300,
     "costOne": 1700,
-    "costTwo": 2700
+    "costTwo": 2700,
+    "editorRank": 14
   },
   {
     "id": "thessaloniki-gr",
@@ -492,7 +500,8 @@
     "rent1BR": 1100,
     "rent2BR": 1500,
     "costOne": 1900,
-    "costTwo": 2900
+    "costTwo": 2900,
+    "editorRank": 8
   },
   {
     "id": "budapest-hu",
@@ -503,7 +512,8 @@
     "rent1BR": 900,
     "rent2BR": 1300,
     "costOne": 1700,
-    "costTwo": 2700
+    "costTwo": 2700,
+    "editorRank": 9
   },
   {
     "id": "krakow-pl",
@@ -514,7 +524,8 @@
     "rent1BR": 800,
     "rent2BR": 1100,
     "costOne": 1500,
-    "costTwo": 2300
+    "costTwo": 2300,
+    "editorRank": 19
   },
   {
     "id": "warsaw-pl",
@@ -822,7 +833,8 @@
     "rent1BR": 650,
     "rent2BR": 950,
     "costOne": 1300,
-    "costTwo": 2000
+    "costTwo": 2000,
+    "editorRank": 5
   },
   {
     "id": "phuket-th",
@@ -855,7 +867,8 @@
     "rent1BR": 500,
     "rent2BR": 800,
     "costOne": 1100,
-    "costTwo": 1700
+    "costTwo": 1700,
+    "editorRank": 17
   },
   {
     "id": "hanoi-vn",
@@ -866,7 +879,8 @@
     "rent1BR": 450,
     "rent2BR": 700,
     "costOne": 1100,
-    "costTwo": 1700
+    "costTwo": 1700,
+    "editorRank": 13
   },
   {
     "id": "da-nang-vn",
@@ -877,7 +891,8 @@
     "rent1BR": 500,
     "rent2BR": 750,
     "costOne": 1150,
-    "costTwo": 1750
+    "costTwo": 1750,
+    "editorRank": 12
   },
   {
     "id": "ho-chi-minh-vn",
@@ -899,7 +914,8 @@
     "rent1BR": 700,
     "rent2BR": 1000,
     "costOne": 1400,
-    "costTwo": 2100
+    "costTwo": 2100,
+    "editorRank": 11
   },
   {
     "id": "jakarta-id",
@@ -932,7 +948,8 @@
     "rent1BR": 900,
     "rent2BR": 1400,
     "costOne": 1700,
-    "costTwo": 2700
+    "costTwo": 2700,
+    "editorRank": 20
   },
   {
     "id": "manila-ph",
@@ -1020,7 +1037,8 @@
     "rent1BR": 450,
     "rent2BR": 650,
     "costOne": 1100,
-    "costTwo": 1600
+    "costTwo": 1600,
+    "editorRank": 7
   },
   {
     "id": "santiago-cl",
@@ -1053,7 +1071,8 @@
     "rent1BR": 550,
     "rent2BR": 800,
     "costOne": 1200,
-    "costTwo": 1800
+    "costTwo": 1800,
+    "editorRank": 4
   },
   {
     "id": "bogota-co",
@@ -1174,7 +1193,8 @@
     "rent1BR": 550,
     "rent2BR": 850,
     "costOne": 1450,
-    "costTwo": 2300
+    "costTwo": 2300,
+    "editorRank": 15
   },
   {
     "id": "yerevan-am",
