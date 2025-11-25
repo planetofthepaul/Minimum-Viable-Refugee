@@ -874,15 +874,11 @@ function render(){
   // Detect if we're on mobile (2 columns) or desktop (3 columns)
   const isMobile = window.innerWidth <= 680;
   const columns = isMobile ? 2 : 3;
-  const wckPosition = isMobile ? 4 : 3;
+  const ad1Position = isMobile ? 4 : 3;
   
   // Check if we're in Editor's Choice mode
   const isEditorChoice = $("#sort").value === "editorChoice";
   let editorChoiceDividerInserted = false;
-  
-  // Calculate when first repeating ad should appear (in terms of cities placed)
-  const citiesBeforeFirstCard2 = ADS.card2.firstPosition - 1 - (wckPosition < ADS.card2.firstPosition ? 1 : 0);
-  let card2Placed = 0;
   
   while (cityIndex < rows.length) {
     // Insert divider after the 20th ranked city
@@ -891,9 +887,10 @@ function render(){
       editorChoiceDividerInserted = true;
     }
     
-    // Check if WCK should be placed (by counting total items placed so far)
     const currentPosition = items.length + 1;
-    if (ADS.card1.enabled && currentPosition === wckPosition) {
+    
+    // Place ad1 at fixed position
+    if (ADS.card1.enabled && currentPosition === ad1Position) {
       items.push({ type: 'ad', data: ADS.card1, id: 'ad-card1' });
       continue;
     }
@@ -903,37 +900,32 @@ function render(){
     cityIndex++;
     citiesPlaced++;
     
-    // Check if we need to place card2 (repeating sponsored ad) after this city
-    const needCard2 = ADS.card2.enabled && (
-      (card2Placed === 0 && citiesPlaced === citiesBeforeFirstCard2) ||
-      (card2Placed > 0 && (citiesPlaced - citiesBeforeFirstCard2) % ADS.card2.interval === 0)
-    );
-    
-    // Now check if we should place card2
-    if (needCard2) {
-      // For repeating ads (not first), fill to rightmost column
-      if (card2Placed > 0) {
-        // Calculate current column position (0-indexed)
-        const itemsSoFar = items.length;
-        const currentColumn = (itemsSoFar - 1) % columns;
-        const rightmostColumn = columns - 1;
-        const citiesNeeded = rightmostColumn - currentColumn;
-        
-        // Add filler cities to reach rightmost column
-        for (let i = 0; i < citiesNeeded && cityIndex < rows.length; i++) {
-          items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
-          cityIndex++;
-          citiesPlaced++;
-        }
-      }
+    // Check if we need ad2
+    if (ADS.card2.enabled && ADS.card2.repeating) {
+      const citiesBeforeFirstAd2 = ADS.card2.firstPosition - 1 - (ad1Position < ADS.card2.firstPosition ? 1 : 0);
       
-      // Place card2 (sponsored ad)
-      const adId = card2Placed === 0 ? 'ad-card2' : `ad-card2-${card2Placed}`;
-      items.push({ type: 'ad', data: ADS.card2, id: adId });
-      card2Placed++;
+      if (citiesPlaced === citiesBeforeFirstAd2 || 
+          (citiesPlaced > citiesBeforeFirstAd2 && (citiesPlaced - citiesBeforeFirstAd2) % ADS.card2.interval === 0)) {
+        
+        // For repeating ads after the first, fill to rightmost column
+        if (citiesPlaced > citiesBeforeFirstAd2) {
+          const currentColumn = (items.length - 1) % columns;
+          const rightmostColumn = columns - 1;
+          const citiesNeeded = rightmostColumn - currentColumn;
+          
+          for (let i = 0; i < citiesNeeded && cityIndex < rows.length; i++) {
+            items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
+            cityIndex++;
+            citiesPlaced++;
+          }
+        }
+        
+        const adNum = Math.floor((citiesPlaced - citiesBeforeFirstAd2) / ADS.card2.interval);
+        const adId = adNum === 0 ? 'ad-card2' : `ad-card2-${adNum}`;
+        items.push({ type: 'ad', data: ADS.card2, id: adId });
+      }
     }
     
-    // Safety break
     if (items.length > 10000) break;
   }
   
