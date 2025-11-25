@@ -541,8 +541,9 @@ const ADS = {
   },
   card2: {
     enabled: true,
-    repeating: true, // This ad repeats every 20 cards
-    interval: 20,    // Repeat every 20 cards
+    firstPosition: 12, // First ad at position 12
+    repeating: true,   // Then repeats every 20 cards
+    interval: 20,      // Repeat every 20 cards
     title: "Learn the Language with Duolingo",
     image: "duolingo-placeholder.png",
     description: "Start learning before you go. Free lessons in 40+ languages to help you connect with locals.",
@@ -869,6 +870,7 @@ function render(){
   const items = [];
   let cityIndex = 0;
   let position = 1;
+  let duolingoCount = 0; // Track how many Duolingo ads we've placed
   
   // Detect if we're on mobile (2 columns) or desktop (3 columns)
   const isMobile = window.innerWidth <= 680;
@@ -893,25 +895,33 @@ function render(){
       continue;
     }
     
-    // Check if Duolingo should be placed (every 20 cards, rightmost column)
-    if (ADS.card2.enabled && ADS.card2.repeating && cityIndex > 0 && cityIndex % ADS.card2.interval === 0) {
-      // Calculate if we need to add filler cities to reach rightmost column
-      const currentRow = Math.floor((position - 1) / columns);
-      const positionInRow = (position - 1) % columns;
-      const rightmostColumn = columns - 1;
-      
-      // Add cities until we reach the rightmost column
-      while (positionInRow < rightmostColumn && cityIndex < rows.length) {
-        items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
-        cityIndex++;
-        position++;
-        const newPositionInRow = (position - 1) % columns;
-        if (newPositionInRow === rightmostColumn) break;
+    // Check if Duolingo should be placed
+    // First ad at position 12 (rightmost column), then every 20 cards in rightmost column
+    const shouldPlaceDuolingo = ADS.card2.enabled && (
+      (duolingoCount === 0 && position === ADS.card2.firstPosition) || // First one at position 12
+      (duolingoCount > 0 && cityIndex > 0 && (cityIndex - (ADS.card2.firstPosition - wckPosition - 1)) % ADS.card2.interval === 0) // Then every 20 cards
+    );
+    
+    if (shouldPlaceDuolingo) {
+      // For repeating ads (not the first one), ensure we're in the rightmost column
+      if (duolingoCount > 0) {
+        const positionInRow = (position - 1) % columns;
+        const rightmostColumn = columns - 1;
+        
+        // Add cities until we reach the rightmost column
+        while (positionInRow !== rightmostColumn && cityIndex < rows.length) {
+          items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
+          cityIndex++;
+          position++;
+          const newPositionInRow = (position - 1) % columns;
+          if (newPositionInRow === rightmostColumn) break;
+        }
       }
       
-      // Now place the ad in rightmost column
-      const adId = `ad-card2-${Math.floor(cityIndex / ADS.card2.interval)}`;
+      // Place the Duolingo ad
+      const adId = duolingoCount === 0 ? 'ad-card2' : `ad-card2-${duolingoCount}`;
       items.push({ type: 'ad', data: ADS.card2, id: adId });
+      duolingoCount++;
       position++;
       continue;
     }
