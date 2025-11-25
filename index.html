@@ -870,8 +870,7 @@ function render(){
   const items = [];
   let cityIndex = 0;
   let position = 1;
-  let citiesPlaced = 0; // Track number of city cards actually placed
-  let lastDuolingoCityCount = -999; // Track when we last placed Duolingo to prevent duplicates
+  let citiesPlaced = 0;
   
   // Detect if we're on mobile (2 columns) or desktop (3 columns)
   const isMobile = window.innerWidth <= 680;
@@ -881,6 +880,10 @@ function render(){
   // Check if we're in Editor's Choice mode
   const isEditorChoice = $("#sort").value === "editorChoice";
   let editorChoiceDividerInserted = false;
+  
+  // Calculate when first Duolingo should appear
+  const citiesBeforeFirstDuolingo = ADS.card2.firstPosition - 1 - (wckPosition < ADS.card2.firstPosition ? 1 : 0);
+  let nextDuolingoCityCount = citiesBeforeFirstDuolingo;
   
   while (cityIndex < rows.length) {
     // Insert divider after the 20th ranked city
@@ -896,23 +899,23 @@ function render(){
       continue;
     }
     
-    // Check if Duolingo should be placed
-    // First at position 12, then every 20 cities after that
-    const citiesBeforeFirstDuolingo = ADS.card2.firstPosition - 1 - (wckPosition < ADS.card2.firstPosition ? 1 : 0);
-    const shouldPlaceFirstDuolingo = ADS.card2.enabled && citiesPlaced === citiesBeforeFirstDuolingo && lastDuolingoCityCount !== citiesPlaced;
-    const shouldPlaceRepeating = ADS.card2.enabled && citiesPlaced > citiesBeforeFirstDuolingo && 
-                                  (citiesPlaced - citiesBeforeFirstDuolingo) % ADS.card2.interval === 0 &&
-                                  lastDuolingoCityCount !== citiesPlaced;
+    // Place a city card
+    items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
+    cityIndex++;
+    citiesPlaced++;
+    position++;
     
-    if (shouldPlaceFirstDuolingo || shouldPlaceRepeating) {
-      // For repeating ads, ensure we're in the rightmost column
-      if (shouldPlaceRepeating) {
+    // After placing city, check if we should place Duolingo
+    if (ADS.card2.enabled && citiesPlaced === nextDuolingoCityCount) {
+      // For first ad, place immediately at position 12
+      // For repeating ads, add filler cities to reach rightmost column
+      if (nextDuolingoCityCount > citiesBeforeFirstDuolingo) {
+        // This is a repeating ad - ensure rightmost column
         const rightmostColumn = columns - 1;
         
-        // Add cities until we reach the rightmost column
         while (cityIndex < rows.length) {
           const positionInRow = (position - 1) % columns;
-          if (positionInRow === rightmostColumn) break; // We're at rightmost, stop adding cities
+          if (positionInRow === rightmostColumn) break; // We're at rightmost, place ad here
           
           items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
           cityIndex++;
@@ -921,22 +924,15 @@ function render(){
         }
       }
       
-      // Place the Duolingo ad and mark that we placed it
-      const duolingoNum = shouldPlaceFirstDuolingo ? 0 : Math.floor((citiesPlaced - citiesBeforeFirstDuolingo) / ADS.card2.interval);
+      // Place the Duolingo ad
+      const duolingoNum = Math.floor((citiesPlaced - citiesBeforeFirstDuolingo) / ADS.card2.interval);
       const adId = duolingoNum === 0 ? 'ad-card2' : `ad-card2-${duolingoNum}`;
       items.push({ type: 'ad', data: ADS.card2, id: adId });
-      lastDuolingoCityCount = citiesPlaced; // Prevent placing again at same city count
       position++;
-      continue;
+      
+      // Set next Duolingo appearance
+      nextDuolingoCityCount += ADS.card2.interval;
     }
-    
-    // Place a city card
-    if (cityIndex < rows.length) {
-      items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
-      cityIndex++;
-      citiesPlaced++;
-    }
-    position++;
     
     // Safety break
     if (position > 10000) break;
