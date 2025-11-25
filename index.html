@@ -131,23 +131,23 @@
   /* First card pulsating badge */
   .first-card-badge{
     position:absolute;
-    top:16px;
-    right:16px;
-    background:linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%);
-    color:var(--bg);
-    padding:6px 14px;
-    border-radius:16px;
-    font-size:11px;
-    font-weight:600;
+    top:10px;
+    left:10px;
+    background:linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+    color:#fff;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
     letter-spacing:0.3px;
-    box-shadow:0 4px 12px rgba(106,168,255,0.4);
+    box-shadow:0 4px 16px rgba(255,107,107,0.6);
     z-index:3;
-    animation:pulse 2.5s ease-in-out infinite;
+    animation:pulse 2s ease-in-out infinite;
     pointer-events:none;
   }
   @keyframes pulse {
-    0%, 100% { transform:scale(1); box-shadow:0 4px 12px rgba(106,168,255,0.4); }
-    50% { transform:scale(1.03); box-shadow:0 6px 16px rgba(106,168,255,0.6); }
+    0%, 100% { transform:scale(1); box-shadow:0 4px 16px rgba(255,107,107,0.6); }
+    50% { transform:scale(1.05); box-shadow:0 6px 24px rgba(255,107,107,0.9); }
   }
 
   .filter-toggle{
@@ -536,7 +536,7 @@ const ADS = {
     image: "wck-logo1.jpg",
     description: "Providing meals to communities affected by natural disasters and crises worldwide",
     link: "https://wck.org",
-    label: "Charitable Partner"
+    label: "Featured Charity"
   },
   card2: {
     enabled: true,
@@ -776,7 +776,7 @@ function createAdCard(ad){
     <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
       <div class="img">
         <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" />
-       <div class="chip" style="background:rgba(10,16,28,.95);border-color:#8cffd1;color:#8cffd1;">${ad.label}</div>
+        <div style="position:absolute;top:10px;left:10px;font-size:10px;font-weight:600;letter-spacing:0.08em;color:#6b7280;text-transform:uppercase;">SPONSORED</div>
       </div>
       <div class="body">
         <div class="title">
@@ -1013,15 +1013,21 @@ render = function() {
       if (firstCard && !firstCard.querySelector('.first-card-badge')) {
         badgeAdded = true;
         
+        // Hide the regular chip on first card
+        const chip = firstCard.querySelector('.chip');
+        if (chip) chip.style.display = 'none';
+        
         const badge = document.createElement('div');
         badge.className = 'first-card-badge';
-        badge.textContent = '👉 Click to explore';
+        badge.textContent = '👆 Tap to explore';
         firstCard.style.position = 'relative';
-        firstCard.appendChild(badge);
+        firstCard.querySelector('.img').appendChild(badge);
         
         const removeBadge = () => {
           if (badge && badge.parentNode) {
             badge.remove();
+            // Show the regular chip again
+            if (chip) chip.style.display = '';
             sessionStorage.setItem('mve_seen_first_card', 'true');
           }
         };
