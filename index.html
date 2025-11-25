@@ -136,7 +136,7 @@
     background:#ff9500;
     color:#fff;
     padding:10px 18px;
-    border-radius:8px;
+    border-radius:999px;
     font-size:13px;
     font-weight:700;
     letter-spacing:0.02em;
@@ -1084,9 +1084,9 @@ function openCityDetail(id, cardEl){
           <div class="city-links-title">Quick links</div>
           <ul style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">
             <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
-            <li><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(city.city + ' cost of living')}" target="_blank" rel="noopener">YouTube cost of living →</a></li>
-            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
             <li><a href="https://www.google.com/search?q=${encodeURIComponent('reddit ' + city.city + ' cost of living')}" target="_blank" rel="noopener">Reddit cost of living →</a></li>
+            <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+            <li><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(city.city + ' cost of living')}" target="_blank" rel="noopener">YouTube cost of living →</a></li>
           </ul>
         </div>
         ${ADS.overlayBanner.enabled ? ADS.overlayBanner.html : ''}
@@ -1123,7 +1123,7 @@ render = function() {
         
         const badge = document.createElement('div');
         badge.className = 'first-card-badge';
-        badge.textContent = 'Tap to explore';
+        badge.textContent = '👉 Tap to explore';
         firstCard.style.position = 'relative';
         firstCard.querySelector('.img').appendChild(badge);
         firstCard.querySelector('.img').appendChild(badge);
