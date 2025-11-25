@@ -1027,7 +1027,8 @@ render = function() {
         const badge = document.createElement('div');
         badge.className = 'first-card-badge';
         badge.textContent = 'Tap to explore';
-        firstCard.style.position = 'relative';.position = 'relative';
+        firstCard.style.position = 'relative';
+        firstCard.querySelector('.img').appendChild(badge);
         firstCard.querySelector('.img').appendChild(badge);
         
         const removeBadge = () => {
