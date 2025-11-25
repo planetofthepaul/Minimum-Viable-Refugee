@@ -133,21 +133,21 @@
     position:absolute;
     top:10px;
     left:10px;
-    background:linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+    background:#ff9500;
     color:#fff;
     padding:8px 16px;
     border-radius:999px;
     font-size:12px;
     font-weight:700;
     letter-spacing:0.3px;
-    box-shadow:0 4px 16px rgba(255,107,107,0.6);
+    box-shadow:0 4px 16px rgba(255,149,0,0.5);
     z-index:3;
     animation:pulse 2s ease-in-out infinite;
     pointer-events:none;
   }
   @keyframes pulse {
-    0%, 100% { transform:scale(1); box-shadow:0 4px 16px rgba(255,107,107,0.6); }
-    50% { transform:scale(1.05); box-shadow:0 6px 24px rgba(255,107,107,0.9); }
+    0%, 100% { transform:scale(1); box-shadow:0 4px 16px rgba(255,149,0,0.5); }
+    50% { transform:scale(1.05); box-shadow:0 6px 24px rgba(255,149,0,0.7); }
   }
 
   .filter-toggle{
@@ -472,7 +472,7 @@
   <div class="controls wrap" role="region" aria-label="Controls">
     <div class="f" style="grid-column:span 4">
       <label for="income">Your monthly income (USD)</label>
-      <input id="income" type="number" min="0" step="50" value="6000" />
+      <input id="income" type="number" min="0" step="50" value="3000" />
     </div>
 
     <div class="f" style="grid-column:span 4">
@@ -772,11 +772,18 @@ function createAdCard(ad){
   article.dataset.isAd = 'true';
   article.style.cursor = 'pointer';
   
+  // Determine if this is a sponsored ad or featured charity
+  const isCharity = ad.label === "Featured Charity";
+  const labelText = isCharity ? ad.label : "SPONSORED";
+  const labelStyle = isCharity 
+    ? "position:absolute;top:10px;left:10px;background:rgba(10,16,28,.95);border:1px solid #8cffd1;color:#8cffd1;border-radius:999px;padding:6px 10px;font-size:12px;"
+    : "position:absolute;top:10px;left:10px;font-size:10px;font-weight:600;letter-spacing:0.08em;color:#6b7280;text-transform:uppercase;";
+  
   article.innerHTML = `
     <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
       <div class="img">
         <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" />
-        <div style="position:absolute;top:10px;left:10px;font-size:10px;font-weight:600;letter-spacing:0.08em;color:#6b7280;text-transform:uppercase;">SPONSORED</div>
+        <div style="${labelStyle}">${labelText}</div>
       </div>
       <div class="body">
         <div class="title">
