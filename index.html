@@ -907,17 +907,17 @@ function render(){
     if (shouldPlaceFirstDuolingo || shouldPlaceRepeating) {
       // For repeating ads, ensure we're in the rightmost column
       if (shouldPlaceRepeating) {
-        const positionInRow = (position - 1) % columns;
         const rightmostColumn = columns - 1;
         
         // Add cities until we reach the rightmost column
-        while (positionInRow !== rightmostColumn && cityIndex < rows.length) {
+        while (cityIndex < rows.length) {
+          const positionInRow = (position - 1) % columns;
+          if (positionInRow === rightmostColumn) break; // We're at rightmost, stop adding cities
+          
           items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
           cityIndex++;
           citiesPlaced++;
           position++;
-          const newPositionInRow = (position - 1) % columns;
-          if (newPositionInRow === rightmostColumn) break;
         }
       }
       
