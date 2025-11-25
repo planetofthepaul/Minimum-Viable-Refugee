@@ -554,9 +554,10 @@ const ADS = {
     enabled: true,
     html: `
       <div style="margin-top:20px;padding:16px;background:#0c121f;border:1px solid #1b2742;border-radius:10px;text-align:center;">
-        <div style="font-size:11px;color:#6b7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Sponsored</div>
-        <a href="https://example.com" target="_blank" rel="noopener" style="color:var(--brand2);text-decoration:none;font-size:14px;">
-          Your Message Here - 728x90 or Custom
+        <div style="font-size:11px;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Sponsored</div>
+        <a href="https://wise.com" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;display:block;">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Send money internationally with Wise</div>
+          <div style="font-size:13px;color:var(--muted);">Save up to 6x on international transfers compared to banks →</div>
         </a>
       </div>
     `
@@ -753,7 +754,16 @@ function breakdownHTML(c){
     <div class="break-section">
       <div class="break-heading">Monthly breakdown</div>
       <div class="primary-total">
-        <div class="k">${household==="single" ? "Total monthly cost (single)" : "Total monthly cost (two)"}</div>
+        <div class="k">
+          ${household==="single" ? "Total monthly cost (single)" : "Total monthly cost (two)"}
+          <span style="position:relative;display:inline-block;margin-left:4px;">
+            <button type="button" style="background:none;border:none;color:var(--muted);cursor:help;font-size:12px;padding:0;vertical-align:middle;" title="What's included?">ⓘ</button>
+            <span class="cost-tooltip" style="visibility:hidden;opacity:0;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:8px;padding:10px 12px;background:#1a2742;border:1px solid #2a3654;border-radius:6px;font-size:11px;color:var(--text);white-space:nowrap;z-index:100;transition:opacity 0.2s,visibility 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.3);line-height:1.5;">
+              Does not include health insurance,<br>international flights, or entertainment
+              <span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#2a3654;"></span>
+            </span>
+          </span>
+        </div>
         <div class="v">${money(total)}/mo</div>
         ${pctLabel ? `<div class="sub">${pctLabel}</div>` : ''}
       </div>
@@ -779,13 +789,6 @@ function breakdownHTML(c){
           <span class="break-item-value">${money(other)}/mo</span>
         </li>
       </ul>
-      <details style="margin-top:16px;padding:12px;background:#0c121f;border:1px solid #1b2742;border-radius:8px;">
-        <summary style="cursor:pointer;font-size:13px;color:var(--brand2);font-weight:600;">What's included in these costs?</summary>
-        <div style="margin-top:12px;font-size:13px;line-height:1.6;color:var(--muted);">
-          <p style="margin:0 0 12px;"><strong style="color:var(--text);">Included:</strong> Rent, groceries, occasional dining out, utilities (electricity, water, internet), local transportation, and basic personal expenses.</p>
-          <p style="margin:0;"><strong style="color:var(--text);">Not included:</strong> Health insurance, visa costs, international flights, savings, or entertainment. Costs vary by neighborhood and lifestyle.</p>
-        </div>
-      </details>
     </div>
   `;
 }
@@ -1058,10 +1061,6 @@ function openCityDetail(id, cardEl){
   const imgSrc = city._img || FALLBACK_IMG;
   const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
   const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
-  
-  // Generate share URL with current state
-  const income = +$("#income").value || 3000;
-  const shareUrl = `${window.location.origin}${window.location.pathname}?city=${encodeURIComponent(city.city.toLowerCase())}&income=${income}&household=${household}&bedrooms=${bedrooms}`;
 
   const pctLabel = city._pct != null ? `${Math.round(city._pct)}% of your income` : '';
 
@@ -1086,7 +1085,6 @@ function openCityDetail(id, cardEl){
           <ul>
             <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
             <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
-            <li><a href="#" data-share-city style="cursor:pointer;">Share this city →</a></li>
           </ul>
         </div>
         ${ADS.overlayBanner.enabled ? ADS.overlayBanner.html : ''}
@@ -1101,39 +1099,6 @@ function openCityDetail(id, cardEl){
   const closeBtn = overlayEl.querySelector('[data-close]');
   if(closeBtn){
     closeBtn.addEventListener('click', closeCityDetail);
-  }
-  
-  // Share button handler
-  const shareBtn = overlayEl.querySelector('[data-share-city]');
-  if(shareBtn){
-    shareBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      
-      // Try native share on mobile, fallback to copy
-      if(navigator.share && /mobile/i.test(navigator.userAgent)){
-        try {
-          await navigator.share({
-            title: `${city.city} Cost of Living`,
-            text: `Check out the cost of living in ${city.city} - ${money(city._cost)}/month`,
-            url: shareUrl
-          });
-        } catch(err) {
-          // User cancelled or error, do nothing
-        }
-      } else {
-        // Copy to clipboard
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          shareBtn.textContent = 'Link copied! ✓';
-          setTimeout(() => {
-            shareBtn.textContent = 'Share this city →';
-          }, 2000);
-        } catch(err) {
-          // Fallback if clipboard fails
-          alert(`Copy this link:\n${shareUrl}`);
-        }
-      }
-    });
   }
 }
 
@@ -1245,6 +1210,27 @@ document.addEventListener("keydown", (e)=>{
 overlayEl.addEventListener('click', (e)=>{
   if(e.target === overlayEl){
     closeCityDetail();
+  }
+});
+
+// Tooltip hover functionality
+document.addEventListener('mouseover', (e) => {
+  if(e.target.matches('.primary-total button[title]')){
+    const tooltip = e.target.nextElementSibling;
+    if(tooltip && tooltip.classList.contains('cost-tooltip')){
+      tooltip.style.visibility = 'visible';
+      tooltip.style.opacity = '1';
+    }
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  if(e.target.matches('.primary-total button[title]')){
+    const tooltip = e.target.nextElementSibling;
+    if(tooltip && tooltip.classList.contains('cost-tooltip')){
+      tooltip.style.visibility = 'hidden';
+      tooltip.style.opacity = '0';
+    }
   }
 });
 
