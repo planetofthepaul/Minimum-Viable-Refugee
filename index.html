@@ -567,12 +567,24 @@ const ADS = {
 let CITIES = [];
 let CITY_ELEMENTS = new Map(); // Store DOM elements for reuse
 
+const sharedCity = loadStateFromURL(); // Load URL params first
+
 fetch('cities.json')
   .then(r => r.json())
   .then(async data => {
     CITIES = data;
     await preloadImages();   // load each city's image once
     render();
+    
+    // If URL has a city param, open that city's overlay
+    if(sharedCity){
+      setTimeout(() => {
+        const city = CITIES.find(c => c.city.toLowerCase() === sharedCity.toLowerCase());
+        if(city){
+          openCityDetail(city.id);
+        }
+      }, 500);
+    }
   })
   .catch(err => {
     console.error('Failed to load cities.json', err);
@@ -597,6 +609,35 @@ const IMG_CACHE = new Map();
 let household = "single";
 let bedrooms  = "1";
 let LAST_ROWS = [];
+
+// Read URL parameters on load
+function loadStateFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  
+  if(params.has('income')){
+    const income = params.get('income');
+    $("#income").value = income;
+  }
+  
+  if(params.has('household')){
+    household = params.get('household');
+    if(household === "two"){
+      $("#btnSingle").setAttribute("aria-pressed","false");
+      $("#btnTwo").setAttribute("aria-pressed","true");
+    }
+  }
+  
+  if(params.has('bedrooms')){
+    bedrooms = params.get('bedrooms');
+    if(bedrooms === "2"){
+      $("#btn1BR").setAttribute("aria-pressed","false");
+      $("#btn2BR").setAttribute("aria-pressed","true");
+    }
+  }
+  
+  // If city param exists, we'll open it after cities load
+  return params.get('city');
+}
 
 function currentRent(c){ return bedrooms === "1" ? c.rent1BR : c.rent2BR; }
 
@@ -738,6 +779,13 @@ function breakdownHTML(c){
           <span class="break-item-value">${money(other)}/mo</span>
         </li>
       </ul>
+      <details style="margin-top:16px;padding:12px;background:#0c121f;border:1px solid #1b2742;border-radius:8px;">
+        <summary style="cursor:pointer;font-size:13px;color:var(--brand2);font-weight:600;">What's included in these costs?</summary>
+        <div style="margin-top:12px;font-size:13px;line-height:1.6;color:var(--muted);">
+          <p style="margin:0 0 12px;"><strong style="color:var(--text);">Included:</strong> Rent, groceries, occasional dining out, utilities (electricity, water, internet), local transportation, and basic personal expenses.</p>
+          <p style="margin:0;"><strong style="color:var(--text);">Not included:</strong> Health insurance, visa costs, international flights, savings, or entertainment. Costs vary by neighborhood and lifestyle.</p>
+        </div>
+      </details>
     </div>
   `;
 }
@@ -1010,6 +1058,10 @@ function openCityDetail(id, cardEl){
   const imgSrc = city._img || FALLBACK_IMG;
   const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g, "_"))}`;
   const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(city.city + ', ' + city.country)}`;
+  
+  // Generate share URL with current state
+  const income = +$("#income").value || 3000;
+  const shareUrl = `${window.location.origin}${window.location.pathname}?city=${encodeURIComponent(city.city.toLowerCase())}&income=${income}&household=${household}&bedrooms=${bedrooms}`;
 
   const pctLabel = city._pct != null ? `${Math.round(city._pct)}% of your income` : '';
 
@@ -1034,6 +1086,7 @@ function openCityDetail(id, cardEl){
           <ul>
             <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
             <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+            <li><a href="#" data-share-city style="cursor:pointer;">Share this city →</a></li>
           </ul>
         </div>
         ${ADS.overlayBanner.enabled ? ADS.overlayBanner.html : ''}
@@ -1048,6 +1101,39 @@ function openCityDetail(id, cardEl){
   const closeBtn = overlayEl.querySelector('[data-close]');
   if(closeBtn){
     closeBtn.addEventListener('click', closeCityDetail);
+  }
+  
+  // Share button handler
+  const shareBtn = overlayEl.querySelector('[data-share-city]');
+  if(shareBtn){
+    shareBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      // Try native share on mobile, fallback to copy
+      if(navigator.share && /mobile/i.test(navigator.userAgent)){
+        try {
+          await navigator.share({
+            title: `${city.city} Cost of Living`,
+            text: `Check out the cost of living in ${city.city} - ${money(city._cost)}/month`,
+            url: shareUrl
+          });
+        } catch(err) {
+          // User cancelled or error, do nothing
+        }
+      } else {
+        // Copy to clipboard
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          shareBtn.textContent = 'Link copied! ✓';
+          setTimeout(() => {
+            shareBtn.textContent = 'Share this city →';
+          }, 2000);
+        } catch(err) {
+          // Fallback if clipboard fails
+          alert(`Copy this link:\n${shareUrl}`);
+        }
+      }
+    });
   }
 }
 
