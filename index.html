@@ -500,6 +500,7 @@
       <label for="sort">Sort</label>
       <select id="sort">
         <option value="editorChoice">Editor's Choice</option>
+        <option value="withinBudget">Within my budget</option>
         <option value="costAsc">Lowest total cost</option>
         <option value="costDesc">Highest total cost</option>
       </select>
@@ -633,9 +634,19 @@ function computeRows(){
       // If neither has a rank, sort by cost
       return a._cost - b._cost;
     },
+    withinBudget:(a,b)=> {
+      // Filter happens below, this just sorts high to low
+      return b._cost - a._cost;
+    },
     costAsc:(a,b)=> a._cost - b._cost,
     costDesc:(a,b)=> b._cost - a._cost
   };
+  
+  // Filter out cities over budget if "Within my budget" is selected
+  if (sort === "withinBudget" && income > 0) {
+    rows = rows.filter(c => c._cost <= income);
+  }
+  
   rows.sort(sorters[sort] || sorters.editorChoice);
   return rows;
 }
