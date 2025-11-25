@@ -1082,9 +1082,11 @@ function openCityDetail(id, cardEl){
         ${breakdownHTML(city)}
         <div class="city-links">
           <div class="city-links-title">Quick links</div>
-          <ul>
+          <ul style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
             <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+            <li><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(city.city + ' cost of living')}" target="_blank" rel="noopener">YouTube cost of living →</a></li>
+            <li><a href="https://www.google.com/search?q=${encodeURIComponent('reddit ' + city.city + ' cost of living')}" target="_blank" rel="noopener">Reddit cost of living →</a></li>
           </ul>
         </div>
         ${ADS.overlayBanner.enabled ? ADS.overlayBanner.html : ''}
