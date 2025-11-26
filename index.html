@@ -79,7 +79,6 @@
     display: block;
   }
 
-  /* Hero Section */
   .hero{
     position:relative;
     height:60vh;
@@ -121,22 +120,13 @@
     -webkit-text-fill-color:transparent;
     background-clip:text;
   }
-  @keyframes blink {
-    50% { opacity:0; }
-  }
   .hero p{
     font-size:clamp(16px, 2vw, 20px);
     color:var(--text);
     margin:0;
     opacity:0.95;
   }
-  @keyframes bounceUp {
-    0% { opacity:0; transform:translateY(20px); }
-    60% { opacity:1; transform:translateY(-5px); }
-    100% { opacity:1; transform:translateY(0); }
-  }
 
-  /* First card pulsating badge */
   .first-card-badge{
     position:absolute;
     top:10px;
@@ -196,7 +186,7 @@
     border:1px solid #22324d;
     background:#0c121f;
     color:#fff;
-    font-size:16px; /* prevent mobile zoom */
+    font-size:16px;
   }
   .seg{display:flex;gap:8px;justify-content:center}
   .seg button{flex:1;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#d7e6ff;cursor:pointer;text-align:center}
@@ -230,7 +220,6 @@
   .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
   .sum{font-size:13px;color:var(--muted)}
 
-  /* Full-screen city overlay */
   .overlay{
     position:fixed;
     inset:0;
@@ -294,7 +283,7 @@
   }
   .overlay-media{
     position:relative;
-    aspect-ratio:16/6; /* shorter hero */
+    aspect-ratio:16/6;
     background:#0e1526;
   }
   .overlay-media img{
@@ -308,7 +297,6 @@
     padding:16px 18px 18px;
   }
 
-  /* updated breakdown styles */
   .break-heading{
     font-size:13px;
     text-transform:uppercase;
@@ -381,7 +369,7 @@
   }
   .city-links a{
     font-size:14px;
-    color:var(--brand2); /* match logo accent, not default blue */
+    color:var(--brand2);
     text-decoration:none;
   }
   .city-links a:hover{
@@ -425,8 +413,6 @@
   }
 </style>
 
-<!-- Schema.org structured data for SEO -->
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -444,7 +430,6 @@
 
 </head>
 <body>
-<!-- Top Navigation -->
 <header>
   <div class="h-row wrap">
     <div class="brand">
@@ -467,8 +452,6 @@
   </div>
 </header>
 
-<!-- Hero Section -->
-
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
@@ -477,8 +460,6 @@
     <p>Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
   </div>
 </section>
-
-<!-- Filters Section -->
 
 <section>
   <div class="controls wrap" role="region" aria-label="Controls">
@@ -519,7 +500,6 @@
   </select>
 </div>
 
-<!-- Bottom full-width hide/show filters button -->
 <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;">
   <button class="filter-toggle filter-toggle-bottom" id="filterToggleBottom" type="button" aria-expanded="true">
     Hide filters
@@ -532,8 +512,6 @@
 
 <main class="wrap" id="app" aria-live="polite"></main>
 
-<!-- Full-screen city overlay -->
-
 <aside id="cityOverlay" class="overlay" aria-hidden="true"></aside>
 
 <footer>
@@ -544,13 +522,11 @@
 </footer>
 
 <script>
-// ----------------- Ad Configuration -----------------
 const ADS = {
-  // Rotating sponsored cards - cycles through these in order
   rotatingCards: {
     enabled: true,
-    firstPosition: 6,  // First ad at position 6
-    interval: 20,      // New ad every 20 cards
+    firstPosition: 6,
+    interval: 20,
     ads: [
       {
         title: "Learn the Language with Duolingo",
@@ -586,32 +562,22 @@ const ADS = {
   },
   overlayBanner: {
     enabled: false,
-    html: `
-      <div style="margin-top:20px;padding:16px;background:#0c121f;border:1px solid #1b2742;border-radius:10px;text-align:center;">
-        <div style="font-size:11px;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Sponsored</div>
-        <a href="https://wise.com" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;display:block;">
-          <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Send money internationally with Wise</div>
-          <div style="font-size:13px;color:var(--muted);">Save up to 6x on international transfers compared to banks →</div>
-        </a>
-      </div>
-    `
+    html: ''
   }
 };
 
-// ----------------- Data load -----------------
 let CITIES = [];
-let CITY_ELEMENTS = new Map(); // Store DOM elements for reuse
+let CITY_ELEMENTS = new Map();
 
-const sharedCity = loadStateFromURL(); // Load URL params first
+const sharedCity = loadStateFromURL();
 
 fetch('cities.json')
   .then(r => r.json())
   .then(async data => {
     CITIES = data;
-    await preloadImages();   // load each city's image once
+    await preloadImages();
     render();
     
-    // If URL has a city param, open that city's overlay
     if(sharedCity){
       setTimeout(() => {
         const city = CITIES.find(c => c.city.toLowerCase() === sharedCity.toLowerCase());
@@ -628,7 +594,6 @@ fetch('cities.json')
     document.querySelector('#summary').textContent = "Showing 0 cities";
   });
 
-// ----------------- State & helpers -----------------
 const $ = s => document.querySelector(s);
 const money = x => `$${Math.round(x).toLocaleString()}`;
 
@@ -645,7 +610,6 @@ let household = "single";
 let bedrooms  = "1";
 let LAST_ROWS = [];
 
-// Read URL parameters on load
 function loadStateFromURL(){
   const params = new URLSearchParams(window.location.search);
   
@@ -670,7 +634,6 @@ function loadStateFromURL(){
     }
   }
   
-  // If city param exists, we'll open it after cities load
   return params.get('city');
 }
 
@@ -704,23 +667,18 @@ function computeRows(){
     editorChoice:(a,b)=> {
       const aRank = a.editorRank || 999;
       const bRank = b.editorRank || 999;
-      // If both have ranks, sort by rank
       if (aRank !== 999 && bRank !== 999) return aRank - bRank;
-      // If only one has a rank, it comes first
       if (aRank !== 999) return -1;
       if (bRank !== 999) return 1;
-      // If neither has a rank, sort by cost
       return a._cost - b._cost;
     },
     withinBudget:(a,b)=> {
-      // Filter happens below, this just sorts high to low
       return b._cost - a._cost;
     },
     costAsc:(a,b)=> a._cost - b._cost,
     costDesc:(a,b)=> b._cost - a._cost
   };
   
-  // Filter out cities over budget if "Within my budget" is selected
   if (sort === "withinBudget" && income > 0) {
     rows = rows.filter(c => c._cost <= income);
   }
@@ -754,7 +712,6 @@ async function resolveCityImage(city, country, explicit){
   return src;
 }
 
-// Preload images ONCE so filters don't re-trigger loading
 async function preloadImages(){
   const promises = CITIES.map(async c => {
     const key = `${c.city}|${c.country}`;
@@ -770,7 +727,6 @@ async function preloadImages(){
   await Promise.all(promises);
 }
 
-// Breakdown for overlay: one clear primary total + simple list
 function breakdownHTML(c){
   const total = c._cost;
   const rent = c._rent;
@@ -870,7 +826,6 @@ function createAdCard(ad){
   article.dataset.isAd = 'true';
   article.style.cursor = 'pointer';
   
-  // Determine if this is a sponsored ad or featured charity
   const isCharity = ad.label === "Featured Charity";
   const labelText = isCharity ? ad.label : "SPONSORED";
   const labelStyle = isCharity 
@@ -951,52 +906,44 @@ function render(){
     app.appendChild(gridEl);
   }
   
-  // Build array of items (cities + ads) by inserting ads at specific positions
   const items = [];
   let cityIndex = 0;
   let citiesPlaced = 0;
   
-  // Detect if we're on mobile (2 columns) or desktop (3 columns)
   const isMobile = window.innerWidth <= 680;
   const columns = isMobile ? 2 : 3;
   
-  // Check if we're in Editor's Choice mode
   const isEditorChoice = $("#sort").value === "editorChoice";
   let editorChoiceDividerInserted = false;
   
   while (cityIndex < rows.length) {
-    // Insert divider after the 20th ranked city
     if (isEditorChoice && !editorChoiceDividerInserted && cityIndex === 20) {
       items.push({ type: 'divider', id: 'editor-choice-divider' });
       editorChoiceDividerInserted = true;
     }
     
-    // Place a city card
     items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
     cityIndex++;
     citiesPlaced++;
     
-    // Check if we need rotating sponsored ad
     if (ADS.rotatingCards.enabled) {
       const citiesBeforeFirstAd = ADS.rotatingCards.firstPosition - 1;
       
       if (citiesPlaced === citiesBeforeFirstAd || 
           (citiesPlaced > citiesBeforeFirstAd && (citiesPlaced - citiesBeforeFirstAd) % ADS.rotatingCards.interval === 0)) {
         
-        // For repeating ads after the first, fill to rightmost column
-        if (citiesPlaced > citiesBeforeFirstAd) {
-          const currentColumn = (items.length - 1) % columns;
-          const rightmostColumn = columns - 1;
-          const citiesNeeded = rightmostColumn - currentColumn;
-          
-          for (let i = 0; i < citiesNeeded && cityIndex < rows.length; i++) {
-            items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
-            cityIndex++;
-            citiesPlaced++;
-          }
+        const currentPosition = items.length - 1;
+        const currentColumn = currentPosition % columns;
+        const rightmostColumn = columns - 1;
+        
+        const citiesNeeded = rightmostColumn - currentColumn;
+        
+        for (let i = 0; i < citiesNeeded && cityIndex < rows.length; i++) {
+          items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
+          cityIndex++;
+          citiesPlaced++;
         }
         
-        // Determine which ad to show (cycles through the ads array)
         const adIndex = Math.floor((citiesPlaced - citiesBeforeFirstAd) / ADS.rotatingCards.interval) % ADS.rotatingCards.ads.length;
         const adData = ADS.rotatingCards.ads[adIndex];
         const adId = `ad-rotating-${Math.floor((citiesPlaced - citiesBeforeFirstAd) / ADS.rotatingCards.interval)}`;
@@ -1007,10 +954,8 @@ function render(){
     if (items.length > 10000) break;
   }
   
-  // Build set of current IDs
   const currentIds = new Set(items.map(item => item.id));
   
-  // Remove elements that shouldn't be shown
   Array.from(gridEl.children).forEach(el => {
     let elId;
     if (el.dataset.isDivider === 'true') {
@@ -1029,26 +974,22 @@ function render(){
     }
   });
   
-  // Add or update items
   items.forEach((item, index) => {
     let element;
     
     if (item.type === 'divider') {
-      // Check if divider already exists
       element = gridEl.querySelector(`[data-divider-id="${item.id}"]`);
       if (!element) {
         element = createDividerElement();
         element.dataset.dividerId = item.id;
       }
     } else if (item.type === 'ad') {
-      // Check if ad card already exists
       element = gridEl.querySelector(`[data-ad-id="${item.id}"]`);
       if (!element) {
         element = createAdCard(item.data);
         element.dataset.adId = item.id;
       }
     } else {
-      // City card
       element = CITY_ELEMENTS.get(item.id);
       if (!element) {
         element = createCardElement(item.data);
@@ -1058,7 +999,6 @@ function render(){
       }
     }
     
-    // Ensure correct position in grid
     if (gridEl.children[index] !== element) {
       if (index >= gridEl.children.length) {
         gridEl.appendChild(element);
@@ -1069,9 +1009,39 @@ function render(){
   });
   
   $("#summary").textContent = `Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
+  
+  if (!sessionStorage.getItem('mve_seen_first_card')) {
+    setTimeout(() => {
+      const firstCityCard = Array.from(gridEl.children).find(el => 
+        el.dataset.id && !el.dataset.isAd && !el.dataset.isDivider
+      );
+      
+      if (firstCityCard && !firstCityCard.querySelector('.first-card-badge')) {
+        const chip = firstCityCard.querySelector('.chip');
+        if (chip) chip.style.display = 'none';
+        
+        const badge = document.createElement('div');
+        badge.className = 'first-card-badge';
+        badge.textContent = '👉 Tap to explore';
+        firstCityCard.style.position = 'relative';
+        firstCityCard.querySelector('.img').appendChild(badge);
+        
+        const removeBadge = () => {
+          if (badge && badge.parentNode) {
+            badge.remove();
+            if (chip) chip.style.display = '';
+            sessionStorage.setItem('mve_seen_first_card', 'true');
+          }
+        };
+        
+        document.querySelectorAll('.card[data-id]:not([data-is-ad])').forEach(card => {
+          card.addEventListener('click', removeBadge, { once: true });
+        });
+      }
+    }, 300);
+  }
 }
 
-// -------- Full-screen overlay logic --------
 const overlayEl = document.getElementById('cityOverlay');
 
 function closeCityDetail(){
@@ -1131,55 +1101,9 @@ function openCityDetail(id, cardEl){
   }
 }
 
-// --- First card pulsating badge ---
-let badgeAdded = false;
-const baseRender = render;
-render = function() {
-  baseRender();
-  
-  if (!badgeAdded && !sessionStorage.getItem('mve_seen_first_card')) {
-    setTimeout(() => {
-      const firstCard = document.querySelector('.card[data-id]');
-      
-      if (firstCard && !firstCard.querySelector('.first-card-badge')) {
-        badgeAdded = true;
-        
-        // Hide the regular chip on first card
-        const chip = firstCard.querySelector('.chip');
-        if (chip) chip.style.display = 'none';
-        
-        const badge = document.createElement('div');
-        badge.className = 'first-card-badge';
-        badge.textContent = '👉 Tap to explore';
-        firstCard.style.position = 'relative';
-        firstCard.querySelector('.img').appendChild(badge);
-        firstCard.querySelector('.img').appendChild(badge);
-        
-        const removeBadge = () => {
-          if (badge && badge.parentNode) {
-            badge.remove();
-            // Show the regular chip again
-            if (chip) chip.style.display = '';
-            sessionStorage.setItem('mve_seen_first_card', 'true');
-          }
-        };
-        
-        // Remove on any card click
-        document.querySelectorAll('.card[data-id]').forEach(card => {
-          card.addEventListener('click', removeBadge, { once: true });
-        });
-        
-        // No auto-timeout - only removes when user clicks
-      }
-    }, 300);
-  }
-};
-
-// Click to open overlay
 window.addEventListener("click", (e)=>{
   const cardEl = e.target.closest(".card");
   if(cardEl && !overlayEl.contains(e.target)){
-    // Don't open overlay for ad cards
     if (cardEl.dataset.isAd === 'true') {
       return;
     }
@@ -1188,7 +1112,6 @@ window.addEventListener("click", (e)=>{
   }
 });
 
-// Filter + inputs
 ["income","search","sort"].forEach(id=>{
   const el = $("#"+id);
   el.addEventListener("input", render);
@@ -1235,14 +1158,12 @@ document.addEventListener("keydown", (e)=>{
   }
 });
 
-// Close overlay when clicking backdrop
 overlayEl.addEventListener('click', (e)=>{
   if(e.target === overlayEl){
     closeCityDetail();
   }
 });
 
-// Tooltip hover functionality
 document.addEventListener('mouseover', (e) => {
   if(e.target.matches('.primary-total button[title]')){
     const tooltip = e.target.nextElementSibling;
@@ -1263,7 +1184,6 @@ document.addEventListener('mouseout', (e) => {
   }
 });
 
-// Re-render on window resize to handle mobile/desktop ad positioning
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
@@ -1272,7 +1192,6 @@ window.addEventListener('resize', () => {
   }, 250);
 });
 
-// --- Filter toggles: top pill + bottom button, synced ---
 const controlsEl = document.querySelector('.controls');
 const filterBtnTop = document.getElementById('filterToggleTop');
 const filterBtnBottom = document.getElementById('filterToggleBottom');
