@@ -1,3 +1,5 @@
+Does this old code that worked give any clues as to what changed? I think this code worked
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -546,11 +548,20 @@
 <script>
 // ----------------- Ad Configuration -----------------
 const ADS = {
+  card1: {
+    enabled: true,
+    position: 3, // Desktop: position 3 (end of first row in 3-col), Mobile: position 4 (end of second row in 2-col)
+    title: "Support a Good Cause",
+    image: "wck-logo1.jpg",
+    description: "Providing meals to communities affected by natural disasters and crises worldwide",
+    link: "https://wck.org",
+    label: "Featured Charity"
+  },
   // Rotating sponsored cards - cycles through these in order
   rotatingCards: {
     enabled: true,
-    firstPosition: 6,  // First ad at position 6
-    interval: 20,      // New ad every 20 cards after first
+    firstPosition: 12, // First ad at position 12
+    interval: 20,      // New ad every 20 cards
     ads: [
       {
         title: "Learn the Language with Duolingo",
@@ -585,7 +596,7 @@ const ADS = {
     ]
   },
   overlayBanner: {
-    enabled: true,
+    enabled: false,
     html: `
       <div style="margin-top:20px;padding:16px;background:#0c121f;border:1px solid #1b2742;border-radius:10px;text-align:center;">
         <div style="font-size:11px;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Sponsored</div>
@@ -870,13 +881,18 @@ function createAdCard(ad){
   article.dataset.isAd = 'true';
   article.style.cursor = 'pointer';
   
-  const labelStyle = "position:absolute;top:10px;left:10px;font-size:10px;font-weight:600;letter-spacing:0.08em;color:#6b7280;text-transform:uppercase;";
+  // Determine if this is a sponsored ad or featured charity
+  const isCharity = ad.label === "Featured Charity";
+  const labelText = isCharity ? ad.label : "SPONSORED";
+  const labelStyle = isCharity 
+    ? "position:absolute;top:10px;left:10px;background:rgba(10,16,28,.95);border:1px solid #8cffd1;color:#8cffd1;border-radius:999px;padding:6px 10px;font-size:12px;"
+    : "position:absolute;top:10px;left:10px;font-size:10px;font-weight:600;letter-spacing:0.08em;color:#6b7280;text-transform:uppercase;";
   
   article.innerHTML = `
     <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
       <div class="img">
         <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async" />
-        <div style="${labelStyle}">SPONSORED</div>
+        <div style="${labelStyle}">${labelText}</div>
       </div>
       <div class="body">
         <div class="title">
@@ -949,11 +965,12 @@ function render(){
   // Build array of items (cities + ads) by inserting ads at specific positions
   const items = [];
   let cityIndex = 0;
-  let adCount = 0;
+  let citiesPlaced = 0;
   
   // Detect if we're on mobile (2 columns) or desktop (3 columns)
   const isMobile = window.innerWidth <= 680;
   const columns = isMobile ? 2 : 3;
+  const ad1Position = isMobile ? 4 : 3;
   
   // Check if we're in Editor's Choice mode
   const isEditorChoice = $("#sort").value === "editorChoice";
@@ -966,33 +983,46 @@ function render(){
       editorChoiceDividerInserted = true;
     }
     
-    // Check if we need an ad at this position
-    // First ad after 5 cities (position 6), then every 20 cities after
-    const citiesForNextAd = adCount === 0 ? 5 : 5 + (adCount * 20);
+    const currentPosition = items.length + 1;
     
-    if (ADS.rotatingCards.enabled && cityIndex === citiesForNextAd) {
-      // Fill remaining columns to push ad to rightmost position
-      const currentColumn = items.length % columns;
-      const rightmostColumn = columns - 1;
-      
-      if (currentColumn !== rightmostColumn) {
-        const citiesNeeded = rightmostColumn - currentColumn;
-        for (let i = 0; i < citiesNeeded && cityIndex < rows.length; i++) {
-          items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
-          cityIndex++;
-        }
-      }
-      
-      // Add the ad
-      const adData = ADS.rotatingCards.ads[adCount % ADS.rotatingCards.ads.length];
-      items.push({ type: 'ad', data: adData, id: `ad-rotating-${adCount}` });
-      adCount++;
+    // Place ad1 at fixed position
+    if (ADS.card1.enabled && currentPosition === ad1Position) {
+      items.push({ type: 'ad', data: ADS.card1, id: 'ad-card1' });
       continue;
     }
     
     // Place a city card
     items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
     cityIndex++;
+    citiesPlaced++;
+    
+    // Check if we need rotating sponsored ad
+    if (ADS.rotatingCards.enabled) {
+      const citiesBeforeFirstAd = ADS.rotatingCards.firstPosition - 1 - (ad1Position < ADS.rotatingCards.firstPosition ? 1 : 0);
+      
+      if (citiesPlaced === citiesBeforeFirstAd || 
+          (citiesPlaced > citiesBeforeFirstAd && (citiesPlaced - citiesBeforeFirstAd) % ADS.rotatingCards.interval === 0)) {
+        
+        // For repeating ads after the first, fill to rightmost column
+        if (citiesPlaced > citiesBeforeFirstAd) {
+          const currentColumn = (items.length - 1) % columns;
+          const rightmostColumn = columns - 1;
+          const citiesNeeded = rightmostColumn - currentColumn;
+          
+          for (let i = 0; i < citiesNeeded && cityIndex < rows.length; i++) {
+            items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
+            cityIndex++;
+            citiesPlaced++;
+          }
+        }
+        
+        // Determine which ad to show (cycles through the ads array)
+        const adIndex = Math.floor((citiesPlaced - citiesBeforeFirstAd) / ADS.rotatingCards.interval) % ADS.rotatingCards.ads.length;
+        const adData = ADS.rotatingCards.ads[adIndex];
+        const adId = `ad-rotating-${Math.floor((citiesPlaced - citiesBeforeFirstAd) / ADS.rotatingCards.interval)}`;
+        items.push({ type: 'ad', data: adData, id: adId });
+      }
+    }
     
     if (items.length > 10000) break;
   }
