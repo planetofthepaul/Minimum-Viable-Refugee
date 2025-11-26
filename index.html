@@ -546,19 +546,10 @@
 <script>
 // ----------------- Ad Configuration -----------------
 const ADS = {
-  card1: {
-    enabled: true,
-    position: 6, // Desktop: position 3 (end of first row in 3-col), Mobile: position 4 (end of second row in 2-col)
-    title: "Support a Good Cause",
-    image: "wck-logo1.jpg",
-    description: "Providing meals to communities affected by natural disasters and crises worldwide",
-    link: "https://wck.org",
-    label: "Featured Charity"
-  },
   // Rotating sponsored cards - cycles through these in order
   rotatingCards: {
     enabled: true,
-    firstPosition: 20, // First ad at position 12
+    firstPosition: 6,  // First ad at position 6
     interval: 20,      // New ad every 20 cards
     ads: [
       {
@@ -968,7 +959,6 @@ function render(){
   // Detect if we're on mobile (2 columns) or desktop (3 columns)
   const isMobile = window.innerWidth <= 680;
   const columns = isMobile ? 2 : 3;
-  const ad1Position = isMobile ? 4 : 3;
   
   // Check if we're in Editor's Choice mode
   const isEditorChoice = $("#sort").value === "editorChoice";
@@ -981,14 +971,6 @@ function render(){
       editorChoiceDividerInserted = true;
     }
     
-    const currentPosition = items.length + 1;
-    
-    // Place ad1 at fixed position
-    if (ADS.card1.enabled && currentPosition === ad1Position) {
-      items.push({ type: 'ad', data: ADS.card1, id: 'ad-card1' });
-      continue;
-    }
-    
     // Place a city card
     items.push({ type: 'city', data: rows[cityIndex], id: String(rows[cityIndex].id) });
     cityIndex++;
@@ -996,7 +978,7 @@ function render(){
     
     // Check if we need rotating sponsored ad
     if (ADS.rotatingCards.enabled) {
-      const citiesBeforeFirstAd = ADS.rotatingCards.firstPosition - 1 - (ad1Position < ADS.rotatingCards.firstPosition ? 1 : 0);
+      const citiesBeforeFirstAd = ADS.rotatingCards.firstPosition - 1;
       
       if (citiesPlaced === citiesBeforeFirstAd || 
           (citiesPlaced > citiesBeforeFirstAd && (citiesPlaced - citiesBeforeFirstAd) % ADS.rotatingCards.interval === 0)) {
