@@ -539,16 +539,43 @@ const ADS = {
     link: "https://wck.org",
     label: "Featured Charity"
   },
-  card2: {
+  // Rotating sponsored cards - cycles through these in order
+  rotatingCards: {
     enabled: true,
     firstPosition: 12, // First ad at position 12
-    repeating: true,   // Then repeats every 20 cards
-    interval: 20,      // Repeat every 20 cards
-    title: "Learn the Language with Duolingo",
-    image: "duolingo-placeholder.png",
-    description: "Start learning before you go. Free lessons in 40+ languages to help you connect with locals.",
-    link: "https://www.duolingo.com",
-    label: "Language Learning"
+    interval: 20,      // New ad every 20 cards
+    ads: [
+      {
+        title: "Learn the Language with Duolingo",
+        image: "duolingo-placeholder.png",
+        description: "Start learning before you go. Free lessons in 40+ languages to help you connect with locals.",
+        link: "https://www.duolingo.com"
+      },
+      {
+        title: "Stay Secure with NordVPN",
+        image: "nordvpn-placeholder.png",
+        description: "Protect your privacy and access content anywhere. Trusted by millions of travelers worldwide.",
+        link: "https://nordvpn.com"
+      },
+      {
+        title: "Send Money with Wise",
+        image: "wise-placeholder.png",
+        description: "Save up to 6x on international transfers. Fast, secure, and transparent pricing.",
+        link: "https://wise.com"
+      },
+      {
+        title: "Travel Insurance by SafetyWing",
+        image: "safetywing-placeholder.png",
+        description: "Nomad insurance designed for remote workers and travelers. Coverage in 180+ countries.",
+        link: "https://safetywing.com"
+      },
+      {
+        title: "Book Your Stay on Vrbo",
+        image: "vrbo-placeholder.png",
+        description: "Find entire homes for your first month abroad. Perfect for getting settled in a new city.",
+        link: "https://vrbo.com"
+      }
+    ]
   },
   overlayBanner: {
     enabled: false,
@@ -951,15 +978,15 @@ function render(){
     cityIndex++;
     citiesPlaced++;
     
-    // Check if we need ad2
-    if (ADS.card2.enabled && ADS.card2.repeating) {
-      const citiesBeforeFirstAd2 = ADS.card2.firstPosition - 1 - (ad1Position < ADS.card2.firstPosition ? 1 : 0);
+    // Check if we need rotating sponsored ad
+    if (ADS.rotatingCards.enabled) {
+      const citiesBeforeFirstAd = ADS.rotatingCards.firstPosition - 1 - (ad1Position < ADS.rotatingCards.firstPosition ? 1 : 0);
       
-      if (citiesPlaced === citiesBeforeFirstAd2 || 
-          (citiesPlaced > citiesBeforeFirstAd2 && (citiesPlaced - citiesBeforeFirstAd2) % ADS.card2.interval === 0)) {
+      if (citiesPlaced === citiesBeforeFirstAd || 
+          (citiesPlaced > citiesBeforeFirstAd && (citiesPlaced - citiesBeforeFirstAd) % ADS.rotatingCards.interval === 0)) {
         
         // For repeating ads after the first, fill to rightmost column
-        if (citiesPlaced > citiesBeforeFirstAd2) {
+        if (citiesPlaced > citiesBeforeFirstAd) {
           const currentColumn = (items.length - 1) % columns;
           const rightmostColumn = columns - 1;
           const citiesNeeded = rightmostColumn - currentColumn;
@@ -971,9 +998,11 @@ function render(){
           }
         }
         
-        const adNum = Math.floor((citiesPlaced - citiesBeforeFirstAd2) / ADS.card2.interval);
-        const adId = adNum === 0 ? 'ad-card2' : `ad-card2-${adNum}`;
-        items.push({ type: 'ad', data: ADS.card2, id: adId });
+        // Determine which ad to show (cycles through the ads array)
+        const adIndex = Math.floor((citiesPlaced - citiesBeforeFirstAd) / ADS.rotatingCards.interval) % ADS.rotatingCards.ads.length;
+        const adData = ADS.rotatingCards.ads[adIndex];
+        const adId = `ad-rotating-${Math.floor((citiesPlaced - citiesBeforeFirstAd) / ADS.rotatingCards.interval)}`;
+        items.push({ type: 'ad', data: adData, id: adId });
       }
     }
     
