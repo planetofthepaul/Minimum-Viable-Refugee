@@ -1,0 +1,588 @@
+---
+import Base from '../layouts/Base.astro';
+import { getAllCities } from '../lib/airtable.js';
+
+const cities = await getAllCities();
+
+// Build the JSON the existing homepage JS expects
+const citiesJson = cities.map(c => ({
+  id: c.id,
+  city: c.city,
+  country: c.country,
+  region: c.region,
+  rent1BR: c.rent1BR,
+  rent2BR: c.rent2BR,
+  rent3BR: c.rent3BR,
+  food: c.food,
+  utilities: c.utilities,
+  transit: c.transit,
+  other: c.other,
+  // Pre-computed totals for backward compat with existing homepage JS
+  costOne: c.costs['single-1BR'].total,
+  costTwo: c.costs['couple-1BR'].total,
+  costFamily: c.costs['family-1BR'].total,
+  editorRank: c.editorRank,
+  coupleMultiplier: c.coupleMultiplier,
+  familyMultiplier: c.costs['family-1BR'].multiplier,
+}));
+---
+
+<Base>
+  <Fragment slot="head">
+    <meta name="keywords" content="cost of living, city comparison, rent calculator, expat, digital nomad, relocation, affordable cities, living expenses" />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Minimum Viable Expat",
+      "applicationCategory": "FinanceApplication",
+      "description": "Calculate and compare cost of living across 230+ cities worldwide based on your income.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    })} />
+
+    <style>
+      /* Hero */
+      .hero{position:relative;height:60vh;min-height:400px;max-height:600px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:0}
+      .hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);background-image:url('https://images.unsplash.com/photo-1652088241116-5faf85b6c6aa?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');background-size:cover;background-position:center}
+      .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,19,0.3) 0%,rgba(11,14,19,0.8) 100%)}
+      .hero-content{position:relative;z-index:2;text-align:center;padding:24px;max-width:800px}
+      .hero h1{font-size:clamp(32px,6vw,56px);margin:0 0 16px;line-height:1.1;font-weight:800;background:linear-gradient(135deg,var(--brand2) 0%,var(--brand) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .hero p{font-size:clamp(16px,2vw,20px);color:var(--text);margin:0;opacity:.95}
+
+      /* Filter toggle */
+      .filter-toggle{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid #22324d;background:#0c121f;color:var(--muted);cursor:pointer;white-space:nowrap}
+      .filter-toggle-main{margin-left:12px}
+      .filter-toggle-bottom{width:100%;margin-top:6px;background:#182033;color:#eaf1ff;border-color:#2b3a5a;font-weight:600}
+
+      /* Controls */
+      .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;padding:32px 16px 18px;background:var(--bg);position:relative}
+      .controls.is-hidden{display:none}
+      .f{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+      .f label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+      .f input,.f select{width:100%;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#fff;font-size:16px}
+      .seg{display:flex;gap:8px;justify-content:center}
+      .seg button{flex:1;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#d7e6ff;cursor:pointer;text-align:center}
+      .seg button[aria-pressed="true"]{background:#1a2742}
+      .mini{font-size:12px;color:var(--muted)}
+
+      /* Grid */
+      .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 0 70px}
+      .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column}
+      .img{aspect-ratio:16/9;background:#0e1526;position:relative}
+      .img img{width:100%;height:100%;object-fit:cover;display:block}
+      .chip{position:absolute;left:10px;top:10px;background:rgba(10,16,28,.8);border:1px solid #1f2b46;border-radius:999px;padding:6px 10px;font-size:12px}
+      .body{padding:14px}
+      .title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .title h3{margin:0;font-size:18px}
+      .rows{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+      .row{background:#0c121f;border:1px solid #1b2742;border-radius:10px;padding:10px}
+      .k{font-size:12px;color:var(--muted)}
+      .v{margin-top:4px;font-weight:700}
+      .empty{padding:40px;text-align:center;color:var(--muted);border:1px dashed #2a3654;border-radius:12px;background:#0c121f}
+
+      /* First card badge */
+      .first-card-badge{position:absolute;top:10px;left:10px;background:#ff9500;color:#fff;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.02em;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3;animation:strongPulse 2s ease-in-out infinite;pointer-events:none}
+      @keyframes strongPulse{0%,100%{transform:scale(1);box-shadow:0 4px 12px rgba(0,0,0,.4)}50%{transform:scale(1.08);box-shadow:0 6px 20px rgba(255,149,0,.6)}}
+
+      /* Overlay */
+      .overlay{position:fixed;inset:0;background:rgba(5,8,15,.96);backdrop-filter:blur(10px);z-index:40;display:none;overflow-y:auto;padding:16px}
+      .overlay.open{display:block}
+      .overlay-inner{max-width:900px;margin:0 auto;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+      .overlay-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(11,14,19,.92)}
+      .overlay-header-left{display:flex;align-items:center;gap:10px}
+      .overlay-close{border:none;background:#151b29;color:var(--muted);width:30px;height:30px;border-radius:999px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+      .overlay-close:hover{background:#1f283a;color:var(--text)}
+      .overlay-city{font-size:22px;font-weight:700}
+      .overlay-region{margin-top:2px}
+      .overlay-media{position:relative;aspect-ratio:16/6;background:#0e1526}
+      .overlay-media img{width:100%;height:100%;object-fit:cover;display:block}
+      .overlay-body{padding:16px 18px 18px}
+      .break-heading{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+      .break-section{margin-top:4px}
+      .primary-total{padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:10px}
+      .primary-total .k{font-size:12px;color:var(--muted)}
+      .primary-total .v{margin-top:4px;font-size:22px;font-weight:700}
+      .primary-total .sub{margin-top:4px;font-size:12px;color:var(--muted)}
+      .break-list{list-style:none;margin:0;padding:0}
+      .break-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #151b26;font-size:14px}
+      .break-item:last-child{border-bottom:none}
+      .break-item-label{color:var(--muted)}
+      .break-item-value{font-weight:600}
+      .city-links{margin-top:16px}
+      .city-links-title{font-size:12px;color:var(--muted);margin-bottom:4px}
+      .city-links ul{list-style:none;padding:0;margin:0}
+      .city-links li{margin-bottom:4px}
+      .city-links a{font-size:14px;color:var(--brand2);text-decoration:none}
+      .city-links a:hover{text-decoration:underline}
+
+      /* Sticky footer */
+      .site-footer-bar{position:sticky;bottom:0;background:linear-gradient(0deg,rgba(11,14,19,.98),rgba(11,14,19,.6));border-top:1px solid var(--line)}
+      .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+      .sum{font-size:13px;color:var(--muted)}
+
+      /* Tooltip */
+      .cost-tooltip{visibility:hidden;opacity:0;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:8px;padding:10px 12px;background:#1a2742;border:1px solid #2a3654;border-radius:6px;font-size:11px;color:var(--text);white-space:nowrap;z-index:100;transition:opacity .2s,visibility .2s;box-shadow:0 4px 12px rgba(0,0,0,.3);line-height:1.5}
+
+      @media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}.f{grid-column:span 6}}
+      @media(max-width:680px){
+        .grid{grid-template-columns:repeat(2,1fr)}.f{grid-column:span 12}
+        .body{padding:10px}.title h3{font-size:14px}.title .mini{display:none}
+        .card>.body>.rows{grid-template-columns:1fr;gap:8px;margin-top:8px}
+        .card>.body>.rows .row:nth-child(2){display:none}
+        .card>.body>.rows .row .k{display:none}
+        .card>.body>.rows .row .v{font-size:14px}
+        .overlay-inner{border-radius:12px}.overlay-body{padding:14px}
+      }
+    </style>
+  </Fragment>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>Explore Your Next Chapter</h1>
+      <p>Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <section>
+    <div class="controls wrap" role="region" aria-label="Controls">
+      <div class="f" style="grid-column:span 4">
+        <label for="income">Your monthly income (USD)</label>
+        <input id="income" type="number" min="0" step="50" value="3000" />
+      </div>
+      <div class="f" style="grid-column:span 4">
+        <label>Household size</label>
+        <div class="seg" role="group" aria-label="Household">
+          <button id="btnSingle" aria-pressed="true">One</button>
+          <button id="btnTwo" aria-pressed="false">Two</button>
+        </div>
+      </div>
+      <div class="f" style="grid-column:span 4">
+        <label>Apartment size</label>
+        <div class="seg" role="group" aria-label="Bedrooms">
+          <button id="btn1BR" aria-pressed="true">1BR</button>
+          <button id="btn2BR" aria-pressed="false">2BR</button>
+        </div>
+      </div>
+      <div class="f" style="grid-column:span 8">
+        <label for="search">Search</label>
+        <input id="search" type="search" placeholder="Search cities or countries…" />
+      </div>
+      <div class="f" style="grid-column:span 4">
+        <label for="sort">Sort</label>
+        <select id="sort">
+          <option value="editorChoice">Editor's Choice</option>
+          <option value="withinBudget">Within my budget</option>
+          <option value="costAsc">Lowest total cost</option>
+          <option value="costDesc">Highest total cost</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;">
+        <button class="filter-toggle filter-toggle-bottom" id="filterToggleBottom" type="button" aria-expanded="true">Hide filters</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap" id="app" aria-live="polite"></main>
+
+  <aside id="cityOverlay" class="overlay" aria-hidden="true"></aside>
+
+  <div class="site-footer-bar">
+    <div class="foot">
+      <div class="sum" id="summary">Showing results</div>
+      <div class="mini">Tip: press <strong>/</strong> to focus search</div>
+    </div>
+  </div>
+
+  <!-- Inject Airtable data for client-side JS -->
+  <script define:vars={{ citiesJson }}>
+    window.__MVE_CITIES = citiesJson;
+  </script>
+
+  <!-- Homepage interactive JS (your existing logic, uses window.__MVE_CITIES instead of fetch) -->
+  <script is:inline>
+  (function(){
+    // Ad config
+    const ADS = {
+      rotatingCards: {
+        enabled: true,
+        firstPosition: 6,
+        interval: 20,
+        ads: [
+          { title:"Learn the Language with Duolingo", image:"/duolingo-placeholder.png", description:"Start learning before you go. Free lessons in 40+ languages to help you connect with locals.", link:"https://www.duolingo.com" },
+          { title:"Stay Secure with NordVPN", image:"/nordvpn-placeholder.png", description:"Protect your privacy and access content anywhere. Trusted by millions of travelers worldwide.", link:"https://nordvpn.com" },
+          { title:"Send Money with Wise", image:"/wise-placeholder.png", description:"Save up to 6x on international transfers. Fast, secure, and transparent pricing.", link:"https://wise.com" },
+          { title:"Travel Insurance by SafetyWing", image:"/safetywing-placeholder.png", description:"Nomad insurance designed for remote workers and travelers. Coverage in 180+ countries.", link:"https://safetywing.com" },
+          { title:"Book Your Stay on Vrbo", image:"/vrbo-placeholder.png", description:"Find entire homes for your first month abroad. Perfect for getting settled in a new city.", link:"https://vrbo.com" }
+        ]
+      },
+      overlayBanner: { enabled: false, html: '' }
+    };
+
+    let CITIES = [];
+    let CITY_ELEMENTS = new Map();
+    const $ = s => document.querySelector(s);
+    const money = x => `$${Math.round(x).toLocaleString()}`;
+
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><rect width="100%" height="100%" fill="#0e1526"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#2a3654" font-family="system-ui,sans-serif" font-size="36">image unavailable</text></svg>'
+    );
+    const IMG_CACHE = new Map();
+
+    let household = "single";
+    let bedrooms = "1";
+    let LAST_ROWS = [];
+
+    function currentRent(c){ return bedrooms==="1" ? c.rent1BR : c.rent2BR; }
+
+    function currentCost(c){
+      const baseTotal = (household==="single") ? c.costOne : c.costTwo;
+      const baselineRent = (household==="single") ? c.rent1BR : c.rent2BR;
+      const selectedRent = currentRent(c);
+      return baseTotal - baselineRent + selectedRent;
+    }
+
+    function computeRows(){
+      const income = +($("#income").value) || 0;
+      const q = ($("#search").value||"").trim().toLowerCase();
+
+      let rows = CITIES.map(c=>{
+        const cost = currentCost(c);
+        const rent = currentRent(c);
+        const pct = income>0 ? (cost/income)*100 : null;
+        const surplus = income>0 ? (income-cost) : null;
+        return {...c, _cost:cost, _rent:rent, _pct:pct, _surplus:surplus};
+      });
+
+      if(q) rows = rows.filter(c=>(`${c.city} ${c.country} ${c.region}`).toLowerCase().includes(q));
+
+      const sort = $("#sort").value;
+      const sorters = {
+        editorChoice:(a,b)=>{
+          const aR=a.editorRank||999, bR=b.editorRank||999;
+          if(aR!==999&&bR!==999) return aR-bR;
+          if(aR!==999) return -1;
+          if(bR!==999) return 1;
+          return a._cost-b._cost;
+        },
+        withinBudget:(a,b)=>b._cost-a._cost,
+        costAsc:(a,b)=>a._cost-b._cost,
+        costDesc:(a,b)=>b._cost-a._cost
+      };
+
+      if(sort==="withinBudget" && income>0) rows=rows.filter(c=>c._cost<=income);
+      rows.sort(sorters[sort]||sorters.editorChoice);
+      return rows;
+    }
+
+    async function wikiThumbActionAPI(title){
+      const url=`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original|thumbnail&pithumbsize=1280&titles=${encodeURIComponent(title)}&origin=*`;
+      const r=await fetch(url);
+      if(!r.ok) return null;
+      const j=await r.json();
+      const pages=j?.query?.pages||{};
+      const first=Object.values(pages)[0];
+      if(!first) return null;
+      return first.original?.source||first.thumbnail?.source||null;
+    }
+
+    async function preloadImages(){
+      const promises=CITIES.map(async c=>{
+        const key=`${c.city}|${c.country}`;
+        if(c.image){IMG_CACHE.set(key,c.image);c._img=c.image;}
+        else{
+          let src=await wikiThumbActionAPI(`${c.city}, ${c.country}`);
+          if(!src) src=await wikiThumbActionAPI(c.city);
+          if(!src) src=FALLBACK_IMG;
+          IMG_CACHE.set(key,src);
+          c._img=src;
+        }
+      });
+      await Promise.all(promises);
+    }
+
+    function breakdownHTML(c){
+      const total=c._cost, rent=c._rent;
+      // Use REAL per-category data if available, otherwise estimate
+      const mult = household==="single" ? 1.0 : 1.7;
+      const hasRealData = c.food > 0 || c.utilities > 0 || c.transit > 0 || c.other > 0;
+
+      let food, util, tran, other;
+      if (hasRealData) {
+        food = Math.round(c.food * mult);
+        util = Math.round(c.utilities * mult);
+        tran = Math.round(c.transit * mult);
+        other = Math.round(c.other * mult);
+      } else {
+        // Fallback: distribute non-rent costs by weight (legacy behavior)
+        const remaining = Math.max(0, total - rent);
+        food = Math.round(remaining * (2/6));
+        util = Math.round(remaining * (1/6));
+        tran = Math.round(remaining * (1/6));
+        other = Math.max(0, total - (rent + food + util + tran));
+      }
+
+      const pctLabel = c._pct!=null ? `${Math.round(c._pct)}% of your income` : '';
+      const dataNote = hasRealData ? '' : '<div style="font-size:11px;color:#6b7280;margin-top:8px;font-style:italic;">* Estimated breakdown — detailed data coming soon</div>';
+
+      return `
+        <div class="break-section">
+          <div class="break-heading">Monthly breakdown</div>
+          <div class="primary-total">
+            <div class="k">${household==="single"?"Total monthly cost (single)":"Total monthly cost (two)"}</div>
+            <div class="v">${money(total)}/mo</div>
+            ${pctLabel?`<div class="sub">${pctLabel}</div>`:''}
+          </div>
+          <ul class="break-list">
+            <li class="break-item"><span class="break-item-label">${bedrooms==="1"?"1-bedroom rent":"2-bedroom rent"}</span><span class="break-item-value">${money(rent)}/mo</span></li>
+            <li class="break-item"><span class="break-item-label">Food</span><span class="break-item-value">${money(food)}/mo</span></li>
+            <li class="break-item"><span class="break-item-label">Utilities</span><span class="break-item-value">${money(util)}/mo</span></li>
+            <li class="break-item"><span class="break-item-label">Transit</span><span class="break-item-value">${money(tran)}/mo</span></li>
+            <li class="break-item"><span class="break-item-label">Other</span><span class="break-item-value">${money(other)}/mo</span></li>
+          </ul>
+          ${dataNote}
+        </div>`;
+    }
+
+    function createCardElement(c){
+      const top=(c._pct!=null)?`${Math.round(c._pct)}% of income`:`Cost: ${money(c._cost)}/mo`;
+      const imgSrc=c._img||FALLBACK_IMG;
+      const article=document.createElement('article');
+      article.className='card';
+      article.dataset.id=c.id;
+      article.dataset.city=c.city;
+      article.dataset.country=c.country;
+      article.tabIndex=0;
+      article.setAttribute('aria-label',`${c.city}, ${c.country}`);
+      article.innerHTML=`
+        <div class="img">
+          <img alt="${c.city}, ${c.country}" src="${imgSrc}" loading="lazy" decoding="async"/>
+          <div class="chip">${top}</div>
+        </div>
+        <div class="body">
+          <div class="title"><h3>${c.city}, ${c.country}</h3><span class="mini">${c.region}</span></div>
+          <div class="rows">
+            <div class="row"><div class="k">${household==="single"?"Monthly cost (single)":"Monthly cost (two)"}</div><div class="v">${money(c._cost)}/mo</div></div>
+            <div class="row"><div class="k">${bedrooms==="1"?"1-bedroom rent":"2-bedroom rent"}</div><div class="v">${money(c._rent)}/mo</div></div>
+          </div>
+        </div>`;
+      return article;
+    }
+
+    function createAdCard(ad){
+      const article=document.createElement('article');
+      article.className='card';
+      article.dataset.isAd='true';
+      article.style.cursor='pointer';
+      article.innerHTML=`
+        <a href="${ad.link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;">
+          <div class="img">
+            <img alt="${ad.title}" src="${ad.image}" loading="lazy" decoding="async"/>
+            <div style="position:absolute;top:10px;left:10px;font-size:10px;font-weight:600;letter-spacing:.08em;color:#6b7280;text-transform:uppercase;">SPONSORED</div>
+          </div>
+          <div class="body">
+            <div class="title"><h3 style="font-size:16px;">${ad.title}</h3></div>
+            <div style="margin-top:8px;font-size:13px;color:var(--muted);line-height:1.4;">${ad.description}</div>
+          </div>
+        </a>`;
+      return article;
+    }
+
+    function createDividerElement(){
+      const d=document.createElement('div');
+      d.className='editor-divider';
+      d.dataset.isDivider='true';
+      d.style.cssText='grid-column:1/-1;margin:20px 0;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-align:center;';
+      d.innerHTML=`<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">⬆️ Editor's Choice ⬆️</div><div style="font-size:13px;color:var(--muted);">Below sorted by lowest cost</div>`;
+      return d;
+    }
+
+    function updateCardElement(el,c){
+      const top=(c._pct!=null)?`${Math.round(c._pct)}% of income`:`Cost: ${money(c._cost)}/mo`;
+      el.querySelector('.chip').textContent=top;
+      const rows=el.querySelectorAll('.row');
+      rows[0].querySelector('.k').textContent=household==="single"?"Monthly cost (single)":"Monthly cost (two)";
+      rows[0].querySelector('.v').textContent=`${money(c._cost)}/mo`;
+      rows[1].querySelector('.k').textContent=bedrooms==="1"?"1-bedroom rent":"2-bedroom rent";
+      rows[1].querySelector('.v').textContent=`${money(c._rent)}/mo`;
+    }
+
+    function render(){
+      const app=$("#app");
+      const rows=computeRows();
+      LAST_ROWS=rows;
+      if(!rows.length){
+        app.innerHTML='<div class="empty">No results. Clear search or adjust inputs.</div>';
+        $("#summary").textContent="Showing 0 cities";
+        return;
+      }
+      let gridEl=app.querySelector('.grid');
+      if(!gridEl){gridEl=document.createElement('section');gridEl.className='grid';app.innerHTML='';app.appendChild(gridEl);}
+
+      const items=[];
+      let cityIndex=0, citiesPlaced=0;
+      const isMobile=window.innerWidth<=680;
+      const columns=isMobile?2:3;
+      const isEC=$("#sort").value==="editorChoice";
+      let dividerDone=false;
+
+      while(cityIndex<rows.length){
+        if(isEC&&!dividerDone&&cityIndex===20){items.push({type:'divider',id:'ec-divider'});dividerDone=true;}
+        items.push({type:'city',data:rows[cityIndex],id:String(rows[cityIndex].id)});
+        cityIndex++;citiesPlaced++;
+
+        if(ADS.rotatingCards.enabled){
+          const first=ADS.rotatingCards.firstPosition-1;
+          if(citiesPlaced===first||(citiesPlaced>first&&(citiesPlaced-first)%ADS.rotatingCards.interval===0)){
+            if(citiesPlaced>first){
+              const cur=(items.length-1)%columns;
+              const need=columns-1-cur;
+              for(let i=0;i<need&&cityIndex<rows.length;i++){items.push({type:'city',data:rows[cityIndex],id:String(rows[cityIndex].id)});cityIndex++;citiesPlaced++;}
+            }
+            const ai=Math.floor((citiesPlaced-first)/ADS.rotatingCards.interval)%ADS.rotatingCards.ads.length;
+            items.push({type:'ad',data:ADS.rotatingCards.ads[ai],id:`ad-${Math.floor((citiesPlaced-first)/ADS.rotatingCards.interval)}`});
+          }
+        }
+        if(items.length>10000) break;
+      }
+
+      const ids=new Set(items.map(i=>i.id));
+      Array.from(gridEl.children).forEach(el=>{
+        let eid=el.dataset.isDivider==='true'?el.dataset.dividerId:el.dataset.isAd==='true'?el.dataset.adId:el.dataset.id;
+        if(!ids.has(eid)){if(el.dataset.isAd!=='true'&&el.dataset.isDivider!=='true')CITY_ELEMENTS.delete(eid);el.remove();}
+      });
+
+      items.forEach((item,index)=>{
+        let element;
+        if(item.type==='divider'){
+          element=gridEl.querySelector('[data-divider-id="'+item.id+'"]');
+          if(!element){element=createDividerElement();element.dataset.dividerId=item.id;}
+        }else if(item.type==='ad'){
+          element=gridEl.querySelector('[data-ad-id="'+item.id+'"]');
+          if(!element){element=createAdCard(item.data);element.dataset.adId=item.id;}
+        }else{
+          element=CITY_ELEMENTS.get(item.id);
+          if(!element){element=createCardElement(item.data);CITY_ELEMENTS.set(item.id,element);}
+          else updateCardElement(element,item.data);
+        }
+        if(gridEl.children[index]!==element){
+          if(index>=gridEl.children.length) gridEl.appendChild(element);
+          else gridEl.insertBefore(element,gridEl.children[index]);
+        }
+      });
+
+      $("#summary").textContent=`Showing ${rows.length} ${rows.length===1?"city":"cities"}`;
+    }
+
+    // Overlay
+    const overlayEl=document.getElementById('cityOverlay');
+    function closeCityDetail(){overlayEl.classList.remove('open');overlayEl.setAttribute('aria-hidden','true');overlayEl.innerHTML='';document.body.style.overflow='';}
+
+    function openCityDetail(id){
+      const city=LAST_ROWS.find(c=>String(c.id)===String(id));
+      if(!city) return;
+      const imgSrc=city._img||FALLBACK_IMG;
+      const wikiUrl=`https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g,"_"))}`;
+      const mapsUrl=`https://www.google.com/maps/search/${encodeURIComponent(city.city+', '+city.country)}`;
+      const pctLabel=city._pct!=null?`${Math.round(city._pct)}% of your income`:'';
+
+      overlayEl.innerHTML=`
+        <div class="overlay-inner">
+          <div class="overlay-header">
+            <div class="overlay-header-left">
+              <button class="overlay-close" type="button" data-close>&times;</button>
+              <div>
+                <div class="overlay-city">${city.city}, ${city.country}</div>
+                <div class="overlay-region mini">${city.region}${pctLabel?" · "+pctLabel:""}</div>
+              </div>
+            </div>
+          </div>
+          <div class="overlay-media"><img src="${imgSrc}" alt="${city.city}, ${city.country}"></div>
+          <div class="overlay-body">
+            ${breakdownHTML(city)}
+            <div style="margin-top:12px;"><a href="/city/${city.id}.html" style="color:var(--brand2);font-size:14px;">View full city page →</a></div>
+            <div class="city-links">
+              <div class="city-links-title">Quick links</div>
+              <ul style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">
+                <li><a href="${wikiUrl}" target="_blank" rel="noopener">Open Wikipedia →</a></li>
+                <li><a href="https://www.google.com/search?q=${encodeURIComponent('reddit '+city.city+' cost of living')}" target="_blank" rel="noopener">Reddit cost of living →</a></li>
+                <li><a href="${mapsUrl}" target="_blank" rel="noopener">Open Google Maps →</a></li>
+                <li><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(city.city+' cost of living')}" target="_blank" rel="noopener">YouTube cost of living →</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>`;
+      overlayEl.classList.add('open');
+      overlayEl.setAttribute('aria-hidden','false');
+      document.body.style.overflow='hidden';
+      overlayEl.querySelector('[data-close]').addEventListener('click',closeCityDetail);
+    }
+
+    // Event listeners
+    window.addEventListener("click",e=>{
+      const card=e.target.closest(".card");
+      if(card&&!overlayEl.contains(e.target)){
+        if(card.dataset.isAd==='true') return;
+        openCityDetail(card.dataset.id);
+      }
+    });
+
+    ["income","search","sort"].forEach(id=>{
+      const el=$("#"+id);
+      el.addEventListener("input",render);
+      el.addEventListener("change",render);
+    });
+
+    $("#btnSingle").addEventListener("click",()=>{household="single";$("#btnSingle").setAttribute("aria-pressed","true");$("#btnTwo").setAttribute("aria-pressed","false");render();});
+    $("#btnTwo").addEventListener("click",()=>{household="two";$("#btnSingle").setAttribute("aria-pressed","false");$("#btnTwo").setAttribute("aria-pressed","true");render();});
+    $("#btn1BR").addEventListener("click",()=>{bedrooms="1";$("#btn1BR").setAttribute("aria-pressed","true");$("#btn2BR").setAttribute("aria-pressed","false");render();});
+    $("#btn2BR").addEventListener("click",()=>{bedrooms="2";$("#btn1BR").setAttribute("aria-pressed","false");$("#btn2BR").setAttribute("aria-pressed","true");render();});
+
+    document.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){const c=document.activeElement.closest?.(".card");if(c){e.preventDefault();openCityDetail(c.dataset.id);}}
+      if(e.key==="Escape"&&overlayEl.classList.contains('open')) closeCityDetail();
+      if(e.key==="/"&&!["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){e.preventDefault();$("#search").focus();}
+    });
+
+    overlayEl.addEventListener('click',e=>{if(e.target===overlayEl) closeCityDetail();});
+
+    // Filter toggles
+    const controlsEl=document.querySelector('.controls');
+    const filterBtn=document.getElementById('filterToggleBottom');
+    filterBtn.addEventListener('click',()=>{
+      const hidden=controlsEl.classList.toggle('is-hidden');
+      filterBtn.textContent=hidden?'Show filters':'Hide filters';
+      filterBtn.setAttribute('aria-expanded',String(!hidden));
+    });
+
+    // Resize handler
+    let resizeTimer;
+    window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(render,250);});
+
+    // Tooltip
+    document.addEventListener('mouseover',e=>{
+      if(e.target.matches('.primary-total button[title]')){
+        const t=e.target.nextElementSibling;
+        if(t&&t.classList.contains('cost-tooltip')){t.style.visibility='visible';t.style.opacity='1';}
+      }
+    });
+    document.addEventListener('mouseout',e=>{
+      if(e.target.matches('.primary-total button[title]')){
+        const t=e.target.nextElementSibling;
+        if(t&&t.classList.contains('cost-tooltip')){t.style.visibility='hidden';t.style.opacity='0';}
+      }
+    });
+
+    // INIT: Load data from Astro-injected variable
+    CITIES = window.__MVE_CITIES || [];
+    if(CITIES.length){
+      preloadImages().then(()=>render());
+    } else {
+      document.querySelector('#app').innerHTML='<div class="empty">No city data found. Check Airtable connection.</div>';
+      document.querySelector('#summary').textContent="Showing 0 cities";
+    }
+  })();
+  </script>
+</Base>

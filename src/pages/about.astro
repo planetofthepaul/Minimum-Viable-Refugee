@@ -1,0 +1,115 @@
+---
+import Base from '../layouts/Base.astro';
+import { getAllCities } from '../lib/airtable.js';
+
+const cities = await getAllCities();
+const cityCoords = {
+  "Chiang Mai":[18.7883,98.9853],"Lisbon":[38.7223,-9.1393],"New York City":[40.7128,-74.006],"Los Angeles":[34.0522,-118.2437],"San Francisco":[37.7749,-122.4194],"Seattle":[47.6062,-122.3321],"Austin":[30.2672,-97.7431],"Miami":[25.7617,-80.1918],"Chicago":[41.8781,-87.6298],"Denver":[39.7392,-104.9903],"Phoenix":[33.4484,-112.074],"Portland":[45.5152,-122.6784],"Toronto":[43.6532,-79.3832],"Vancouver":[49.2827,-123.1207],"Montreal":[45.5017,-73.5673],"Mexico City":[19.4326,-99.1332],"London":[51.5074,-0.1278],"Paris":[48.8566,2.3522],"Berlin":[52.52,13.405],"Amsterdam":[52.3676,4.9041],"Madrid":[40.4168,-3.7038],"Barcelona":[41.3851,2.1734],"Rome":[41.9028,12.4964],"Prague":[50.0755,14.4378],"Budapest":[47.4979,19.0402],"Istanbul":[41.0082,28.9784],"Dubai":[25.2048,55.2708],"Tokyo":[35.6762,139.6503],"Seoul":[37.5665,126.978],"Singapore":[1.3521,103.8198],"Bangkok":[13.7563,100.5018],"Kuala Lumpur":[3.139,101.6869],"Hanoi":[21.0285,105.8542],"Ho Chi Minh City":[10.8231,106.6297],"Bali":[-8.3405,115.092],"Taipei":[25.033,121.5654],"Sydney":[-33.8688,151.2093],"Melbourne":[-37.8136,144.9631],"Buenos Aires":[-34.6037,-58.3816],"Santiago":[-33.4489,-70.6693],"Lima":[-12.0464,-77.0428],"Medellín":[6.2476,-75.5658],"Bogotá":[4.711,-74.0721],"Cape Town":[-33.9249,18.4241],"Nairobi":[-1.2921,36.8219],"Tbilisi":[41.7151,44.8271]
+};
+---
+
+<Base title="About" description="Learn about Minimum Viable Expat — a tool to compare cost of living across 230+ cities worldwide." canonical="https://minimumviableexpat.com/about">
+  <Fragment slot="head">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      .hero{position:relative;height:60vh;min-height:400px;max-height:600px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+      .hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);background-image:url('https://images.unsplash.com/photo-1652088241116-5faf85b6c6aa?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');background-size:cover;background-position:center}
+      .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,19,0.3) 0%,rgba(11,14,19,0.8) 100%)}
+      .hero-content{position:relative;z-index:2;text-align:center;padding:24px;max-width:800px}
+      .hero h1{font-size:clamp(32px,6vw,56px);margin:0 0 16px;line-height:1.1;font-weight:800;background:linear-gradient(135deg,var(--brand2) 0%,var(--brand) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .hero p{font-size:clamp(16px,2vw,20px);color:var(--text);margin:0;opacity:.95}
+      .about-wrap{max-width:1200px;margin:0 auto;padding:80px 16px}
+      .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin:60px 0}
+      .feature-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:32px 24px;transition:all .3s ease}
+      .feature-card:hover{transform:translateY(-4px);border-color:var(--brand);box-shadow:0 8px 32px rgba(106,168,255,.15)}
+      .feature-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--brand) 0%,var(--brand2) 100%);display:grid;place-items:center;margin-bottom:16px;font-size:24px}
+      .feature-card h3{margin:0 0 12px;font-size:20px;color:var(--text)}
+      .feature-card p{margin:0;color:var(--muted);font-size:15px;line-height:1.6}
+      .map-section{margin:80px 0;padding:48px 32px;background:var(--surface);border:1px solid var(--line);border-radius:20px}
+      .map-section h2{font-size:32px;margin:0 0 12px;text-align:center;background:linear-gradient(135deg,var(--brand2) 0%,var(--brand) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .map-subtitle{text-align:center;color:var(--muted);margin:0 0 32px;font-size:16px}
+      #map{height:500px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+      .map-legend{display:flex;gap:24px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+      .legend-item{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+      .legend-dot{width:12px;height:12px;border-radius:50%}
+      .content-section{margin:60px 0}
+      .content-section h2{font-size:28px;margin:0 0 20px;color:var(--text)}
+      .content-section p{color:var(--muted);font-size:16px;line-height:1.8;margin:16px 0}
+      .content-section a{color:var(--brand);text-decoration:none;transition:color .2s}
+      .content-section a:hover{color:var(--brand2);text-decoration:underline}
+      .cta-section{text-align:center;padding:60px 24px;background:linear-gradient(135deg,rgba(106,168,255,.1) 0%,rgba(140,255,209,.1) 100%);border-radius:20px;border:1px solid var(--line);margin:80px 0}
+      .cta-section h2{font-size:32px;margin:0 0 16px}
+      .cta-section p{color:var(--muted);font-size:18px;margin:0 0 32px}
+      .cta-button{display:inline-block;padding:16px 32px;background:linear-gradient(135deg,var(--brand) 0%,var(--brand2) 100%);color:var(--bg);font-weight:700;font-size:16px;border-radius:12px;text-decoration:none;transition:transform .2s,box-shadow .2s}
+      .cta-button:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(106,168,255,.3)}
+      @media(max-width:768px){.about-wrap{padding:40px 16px}.features{grid-template-columns:1fr}.map-section{padding:32px 16px}#map{height:400px}}
+    </style>
+  </Fragment>
+
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>Explore Your Next Chapter</h1>
+      <p>Compare cost of living across 230+ cities worldwide and find where your income takes you furthest</p>
+    </div>
+  </section>
+
+  <main class="about-wrap">
+    <div class="features">
+      <div class="feature-card"><div class="feature-icon">🏠</div><h3>Housing Data</h3><p>Monthly rent for 1-bedroom, 2-bedroom, and 3-bedroom apartments across every major city, helping you understand your biggest expense.</p></div>
+      <div class="feature-card"><div class="feature-icon">💰</div><h3>Living Expenses</h3><p>Comprehensive breakdown of food, utilities, transportation, and other daily costs for singles, couples, and families.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Real-Time Calculations</h3><p>Instantly see what percentage of your income goes to living expenses in any city based on your situation.</p></div>
+      <div class="feature-card"><div class="feature-icon">🌍</div><h3>Global Coverage</h3><p>Data from 230+ cities across every continent, from major metropolises to emerging digital nomad hotspots.</p></div>
+    </div>
+
+    <section class="map-section">
+      <h2>Our Global Network</h2>
+      <p class="map-subtitle">230+ cities across 6 continents — click any city to see details</p>
+      <div id="map"></div>
+      <div class="map-legend"><div class="legend-item"><div class="legend-dot" style="background:#6aa8ff"></div><span>Cities in our database</span></div></div>
+    </section>
+
+    <section class="content-section">
+      <h2>How It Works</h2>
+      <p>Simply enter your monthly take-home income, select your household type (single, couple, or family), choose your bedroom preference, and instantly see which cities are most affordable for your situation. You can search, filter, and sort by cost, percentage of income, or geographic region.</p>
+      <p>Our intuitive interface lets you compare cities side-by-side, helping you make informed decisions about relocation, remote work opportunities, or your next adventure abroad.</p>
+    </section>
+
+    <section class="content-section">
+      <h2>Our Data</h2>
+      <p>Cost of living data is aggregated from multiple public sources and represents average costs for each city. While we strive for accuracy, actual costs can vary significantly based on neighborhood, lifestyle, and current economic conditions.</p>
+      <p>This tool is intended as a starting point for research, not as definitive financial advice. We recommend using our calculator alongside other resources when planning your move or evaluating new locations.</p>
+    </section>
+
+    <section class="content-section">
+      <h2>Why "Minimum Viable Expat"?</h2>
+      <p>The name reflects the reality that many people today — whether seeking economic opportunity, searching for a better quality of life, or exploring new horizons — need practical tools to make informed decisions about where to live.</p>
+      <p>In an era of remote work, digital nomadism, and increasing global mobility, understanding the financial implications of relocation has never been more important. This tool aims to democratize access to cost-of-living information, empowering individuals to explore opportunities they might not have considered otherwise.</p>
+    </section>
+
+    <section class="cta-section">
+      <h2>Ready to Find Your Perfect City?</h2>
+      <p>Start exploring where your income can take you</p>
+      <a href="/" class="cta-button">Find Your Perfect City</a>
+    </section>
+
+    <section class="content-section">
+      <h2>Contact</h2>
+      <p>This site was launched on November 16th, 2025 and is under active development. If you have questions, suggestions, or found an error in our data, reach out via <a href="mailto:minimumviableexpat@proton.me">minimumviableexpat@proton.me</a></p>
+    </section>
+  </main>
+
+  <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script define:vars={{ cityCoords }}>
+    const map = L.map('map', { center:[20,0], zoom:2, minZoom:2, maxZoom:10, worldCopyJump:true });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:20
+    }).addTo(map);
+    Object.entries(cityCoords).forEach(([city, coords]) => {
+      L.circleMarker(coords, { radius:5, fillColor:'#6aa8ff', color:'#8cffd1', weight:1, opacity:.8, fillOpacity:.6 })
+        .addTo(map)
+        .bindPopup(`<div style="text-align:center;padding:8px;min-width:150px;"><strong style="color:#0b0e13;font-size:16px;">${city}</strong></div>`);
+    });
+  </script>
+</Base>

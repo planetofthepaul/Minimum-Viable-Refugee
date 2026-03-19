@@ -1,0 +1,82 @@
+---
+const { title, description, canonical, extraHead } = Astro.props;
+const siteName = 'Minimum Viable Expat';
+const defaultDesc = 'Calculate how livable cities are based on your income. Compare rent, living costs, and affordability across 230+ cities worldwide.';
+const ogImage = 'https://minimumviableexpat.com/og-image.jpg';
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>{title ? `${title} | ${siteName}` : `${siteName} - Compare Cost of Living in 230+ Cities Worldwide`}</title>
+  <meta name="description" content={description || defaultDesc} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonical || Astro.url.href} />
+  <meta property="og:title" content={title || siteName} />
+  <meta property="og:description" content={description || defaultDesc} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content={title || siteName} />
+  <meta property="twitter:description" content={description || defaultDesc} />
+  <meta property="twitter:image" content={ogImage} />
+  {canonical && <link rel="canonical" href={canonical} />}
+  <link rel="icon" type="image/png" href="/logo-mve.png" />
+
+  <!-- Plausible Analytics -->
+  <script async src="https://plausible.io/js/pa-LtfPK73TbS61OwXTI4wmz.js"></script>
+  <script is:inline>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
+
+  <!-- Google Search Console - uncomment and add your code when ready -->
+  <!-- <meta name="google-site-verification" content="YOUR_CODE" /> -->
+
+  <style is:global>
+    :root {
+      --bg:#0b0e13; --surface:#0f1420; --text:#eaf1ff; --muted:#a9b3c7;
+      --brand:#6aa8ff; --brand2:#8cffd1; --line:#1a2336; --card:#11182a;
+      --shadow:0 10px 28px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    a{color:var(--brand2);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    header{position:sticky;top:0;z-index:100;background:rgba(11,14,19,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .h-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;max-width:1100px;margin:0 auto}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:700}
+    .brand a{color:inherit;text-decoration:none}
+    .badge-img{width:26px;height:26px;border-radius:6px;display:block}
+    .nav{display:flex;gap:16px;font-size:14px}
+    .nav a{color:var(--muted);text-decoration:none;transition:color 0.2s}
+    .nav a:hover{color:var(--text)}
+  </style>
+  <slot name="head" />
+</head>
+<body>
+  <header>
+    <div class="h-row">
+      <div class="brand">
+        <a href="/"><img src="/logo-mve.png" alt="MVE logo" class="badge-img" /></a>
+        <a href="/">Minimum Viable Expat</a>
+      </div>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </div>
+  </header>
+
+  <slot />
+
+  <footer style="border-top:1px solid var(--line);padding:24px 16px;text-align:center;">
+    <div style="font-size:13px;color:var(--muted);">
+      &copy; {new Date().getFullYear()} Minimum Viable Expat. Data updated regularly from local sources.
+    </div>
+  </footer>
+</body>
+</html>

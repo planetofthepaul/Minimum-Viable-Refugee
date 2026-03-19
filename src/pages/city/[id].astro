@@ -1,0 +1,210 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllCities } from '../../lib/airtable.js';
+
+export async function getStaticPaths() {
+  const cities = await getAllCities();
+  return cities.map(city => ({
+    params: { id: city.id },
+    props: { city },
+  }));
+}
+
+const { city } = Astro.props;
+const money = (x) => `$${Math.round(x).toLocaleString()}`;
+const defaultScenario = city.costs['single-1BR'];
+const households = ['single', 'couple', 'family'];
+const bedrooms = ['1BR', '2BR', '3BR'];
+
+const pageTitle = `Cost of Living in ${city.city}, ${city.country}`;
+const pageDesc = city.narrative
+  ? city.narrative.substring(0, 155) + '…'
+  : `Monthly cost of living in ${city.city}, ${city.country} for singles, couples, and families. Rent, food, utilities, transit breakdown.`;
+const canonical = `https://minimumviableexpat.com/city/${city.id}.html`;
+
+const schemaData = {
+  "@context": "https://schema.org",
+  "@type": "Place",
+  "name": `${city.city}, ${city.country}`,
+  "description": pageDesc,
+  "containedInPlace": { "@type": "Country", "name": city.country }
+};
+---
+
+<Base title={pageTitle} description={pageDesc} canonical={canonical}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(schemaData)} />
+    <style>
+      .city-hero { padding:40px 16px 32px; text-align:center; }
+      .city-hero h1 { font-size:clamp(28px,5vw,44px); margin:0 0 8px; font-weight:800; }
+      .city-hero .region { font-size:16px; color:var(--muted); }
+
+      .scenario-controls { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:24px 0; }
+      .seg-group { display:flex; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+      .seg-btn {
+        padding:10px 18px; border:none; background:#0c121f; color:var(--muted);
+        cursor:pointer; font-size:14px; font-family:inherit; transition:background .15s,color .15s;
+      }
+      .seg-btn:not(:last-child) { border-right:1px solid var(--line); }
+      .seg-btn[aria-pressed="true"] { background:#1a2742; color:var(--text); font-weight:600; }
+
+      .cost-card {
+        max-width:600px; margin:0 auto 32px; background:var(--surface);
+        border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow);
+      }
+      .cost-total { padding:20px 24px; border-bottom:1px solid var(--line); text-align:center; }
+      .cost-total .label { font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+      .cost-total .amount { font-size:36px; font-weight:800; margin:8px 0 4px; }
+      .cost-total .sub { font-size:13px; color:var(--muted); }
+      .cost-rows { padding:8px 24px 16px; }
+      .cost-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #151b26; font-size:15px; }
+      .cost-row:last-child { border-bottom:none; }
+      .cost-row .cat { color:var(--muted); }
+      .cost-row .val { font-weight:600; }
+
+      .narrative { max-width:700px; margin:32px auto; padding:0 16px; line-height:1.7; font-size:16px; color:var(--muted); }
+      .narrative h2 { color:var(--text); font-size:22px; margin-bottom:12px; }
+
+      .cost-matrix { max-width:700px; margin:32px auto; padding:0 16px; }
+      .cost-matrix h2 { font-size:18px; margin-bottom:12px; }
+      .matrix-table { width:100%; border-collapse:collapse; font-size:14px; }
+      .matrix-table th,.matrix-table td { padding:10px 12px; text-align:right; border-bottom:1px solid var(--line); }
+      .matrix-table th:first-child,.matrix-table td:first-child { text-align:left; }
+      .matrix-table th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+      .matrix-table td { font-weight:600; }
+
+      .quick-links { max-width:700px; margin:32px auto; padding:0 16px; }
+      .quick-links h2 { font-size:18px; margin-bottom:12px; }
+      .links-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .links-grid a { font-size:14px; padding:8px 0; }
+      .back-link { display:inline-block; margin:32px 16px; font-size:14px; color:var(--brand2); }
+
+      @media(max-width:600px) {
+        .cost-total .amount { font-size:28px; }
+        .links-grid { grid-template-columns:1fr; }
+        .seg-btn { padding:8px 12px; font-size:13px; }
+      }
+    </style>
+  </Fragment>
+
+  <main class="wrap">
+    <a href="/" class="back-link">&larr; All cities</a>
+
+    <div class="city-hero">
+      <h1>{city.city}, {city.country}</h1>
+      <div class="region">{city.region}</div>
+    </div>
+
+    <div class="scenario-controls">
+      <div class="seg-group" data-group="household">
+        <button class="seg-btn" data-val="single" aria-pressed="true">Single</button>
+        <button class="seg-btn" data-val="couple" aria-pressed="false">Couple</button>
+        <button class="seg-btn" data-val="family" aria-pressed="false">Family</button>
+      </div>
+      <div class="seg-group" data-group="bedrooms">
+        <button class="seg-btn" data-val="1BR" aria-pressed="true">1 BR</button>
+        <button class="seg-btn" data-val="2BR" aria-pressed="false">2 BR</button>
+        <button class="seg-btn" data-val="3BR" aria-pressed="false">3 BR</button>
+      </div>
+    </div>
+
+    <div class="cost-card" id="costCard">
+      <div class="cost-total">
+        <div class="label">Estimated monthly cost</div>
+        <div class="amount" id="totalAmount">{money(defaultScenario.total)}/mo</div>
+        <div class="sub" id="totalSub">Single · 1-bedroom apartment</div>
+      </div>
+      <div class="cost-rows">
+        <div class="cost-row">
+          <span class="cat" id="rentLabel">1-bedroom rent</span>
+          <span class="val" id="rentVal">{money(defaultScenario.rent)}/mo</span>
+        </div>
+        <div class="cost-row">
+          <span class="cat">Food</span>
+          <span class="val" id="foodVal">{money(defaultScenario.food)}/mo</span>
+        </div>
+        <div class="cost-row">
+          <span class="cat">Utilities</span>
+          <span class="val" id="utilVal">{money(defaultScenario.utilities)}/mo</span>
+        </div>
+        <div class="cost-row">
+          <span class="cat">Transit</span>
+          <span class="val" id="transitVal">{money(defaultScenario.transit)}/mo</span>
+        </div>
+        <div class="cost-row">
+          <span class="cat">Other</span>
+          <span class="val" id="otherVal">{money(defaultScenario.other)}/mo</span>
+        </div>
+      </div>
+    </div>
+
+    {city.narrative && (
+      <div class="narrative">
+        <h2>Living in {city.city}</h2>
+        <Fragment set:html={city.narrative.replace(/\n/g, '<br/>')} />
+      </div>
+    )}
+
+    <div class="cost-matrix">
+      <h2>Full Cost Comparison</h2>
+      <table class="matrix-table">
+        <thead>
+          <tr><th>Scenario</th><th>1 BR</th><th>2 BR</th><th>3 BR</th></tr>
+        </thead>
+        <tbody>
+          {households.map(h => (
+            <tr>
+              <td style="text-transform:capitalize;">{h}</td>
+              {bedrooms.map(b => (
+                <td>{money(city.costs[`${h}-${b}`].total)}/mo</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quick-links">
+      <h2>Research {city.city}</h2>
+      <div class="links-grid">
+        <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(city.city.replace(/ /g,'_'))}`} target="_blank" rel="noopener">Wikipedia →</a>
+        <a href={`https://www.google.com/search?q=${encodeURIComponent('reddit '+city.city+' cost of living')}`} target="_blank" rel="noopener">Reddit discussions →</a>
+        <a href={`https://www.google.com/maps/search/${encodeURIComponent(city.city+', '+city.country)}`} target="_blank" rel="noopener">Google Maps →</a>
+        <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(city.city+' cost of living')}`} target="_blank" rel="noopener">YouTube videos →</a>
+      </div>
+    </div>
+  </main>
+
+  <script define:vars={{ costs: city.costs }}>
+    const money = (x) => `$${Math.round(x).toLocaleString()}`;
+    let household = 'single';
+    let bedrooms = '1BR';
+
+    function update() {
+      const s = costs[`${household}-${bedrooms}`];
+      if (!s) return;
+      document.getElementById('totalAmount').textContent = `${money(s.total)}/mo`;
+      document.getElementById('totalSub').textContent =
+        `${household.charAt(0).toUpperCase()+household.slice(1)} · ${bedrooms.replace('BR','-bedroom')} apartment`;
+      document.getElementById('rentLabel').textContent = `${bedrooms.replace('BR','-bedroom')} rent`;
+      document.getElementById('rentVal').textContent = `${money(s.rent)}/mo`;
+      document.getElementById('foodVal').textContent = `${money(s.food)}/mo`;
+      document.getElementById('utilVal').textContent = `${money(s.utilities)}/mo`;
+      document.getElementById('transitVal').textContent = `${money(s.transit)}/mo`;
+      document.getElementById('otherVal').textContent = `${money(s.other)}/mo`;
+    }
+
+    document.querySelectorAll('.seg-group').forEach(group => {
+      const name = group.dataset.group;
+      group.querySelectorAll('.seg-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.seg-btn').forEach(b => b.setAttribute('aria-pressed','false'));
+          btn.setAttribute('aria-pressed','true');
+          if (name === 'household') household = btn.dataset.val;
+          else bedrooms = btn.dataset.val;
+          update();
+        });
+      });
+    });
+  </script>
+</Base>
