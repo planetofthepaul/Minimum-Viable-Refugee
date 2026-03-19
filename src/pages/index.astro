@@ -44,23 +44,34 @@ const citiesJson = cities.map(c => ({
       .hero-content{position:relative;z-index:2;text-align:center;padding:24px;max-width:800px}
       .hero h1{font-size:clamp(32px,6vw,56px);margin:0 0 16px;line-height:1.1;font-weight:800;background:linear-gradient(135deg,var(--brand2) 0%,var(--brand) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
       .hero p{font-size:clamp(16px,2vw,20px);color:var(--text);margin:0;opacity:.95}
-      .filter-toggle{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid #22324d;background:#0c121f;color:var(--muted);cursor:pointer;white-space:nowrap}
-      .filter-toggle-main{margin-left:12px}
-      .filter-toggle-bottom{background:#182033;color:#eaf1ff;border-color:#2b3a5a;font-weight:600}
-      .filter-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;flex-wrap:wrap}
-      .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;padding:32px 16px 18px;background:var(--bg);position:relative}
-      .controls.is-hidden{display:none}
-      .region-bar{display:flex;gap:6px;padding:4px 16px 12px;flex-wrap:wrap;justify-content:center;max-width:1100px;margin:0 auto}
-      .region-pill{padding:7px 14px;border-radius:999px;border:1px solid #22324d;background:#0c121f;color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s;white-space:nowrap}
+      .filter-toggle{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;white-space:nowrap;font-family:inherit;font-weight:500;transition:all .15s}
+      .filter-toggle:hover{background:#182033;border-color:#2b3a5a}
+      .filter-toggle svg{width:14px;height:14px;transition:transform .2s}
+      .filter-toggle[aria-expanded="false"] svg{transform:rotate(180deg)}
+      .toolbar{max-width:1100px;margin:0 auto;padding:8px 16px}
+      .toolbar-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+      .toolbar-search{flex:1;max-width:480px;position:relative}
+      .toolbar-search input{width:100%;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:#fff;font-size:14px;font-family:inherit}
+      .toolbar-search input::placeholder{color:var(--muted)}
+      .toolbar-right{display:flex;align-items:center;gap:8px}
+      .toolbar-sort select{padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:#fff;font-size:14px;font-family:inherit;cursor:pointer}
+      .panel{max-width:1100px;margin:0 auto;overflow:hidden;transition:max-height .3s ease,opacity .2s ease;padding:0 16px}
+      .panel.is-hidden{max-height:0!important;opacity:0;padding-top:0;padding-bottom:0}
+      .panel-inner{padding:12px 0 8px}
+      .panel-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+      .panel-group{display:flex;flex-direction:column;gap:4px}
+      .panel-group-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+      .seg{display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+      .seg button{padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s;border-right:1px solid var(--line)}
+      .seg button:last-child{border-right:none}
+      .seg button[aria-pressed="true"]{background:#1a2742;color:var(--text);font-weight:600}
+      .seg button:hover:not([aria-pressed="true"]){background:rgba(26,39,66,.4)}
+      .panel-group-income input{padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:#fff;font-size:14px;font-family:inherit;width:140px}
+      .region-bar{display:flex;gap:6px;flex-wrap:wrap;padding-top:4px}
+      .region-pill{padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s;white-space:nowrap}
       .region-pill:hover{border-color:#3a4f6d;color:var(--text)}
       .region-pill[aria-pressed="true"]{background:var(--brand);color:#0b0e13;border-color:var(--brand);font-weight:600}
       .region-pill.all-btn[aria-pressed="true"]{background:var(--brand2);border-color:var(--brand2)}
-      .f{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
-      .f label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-      .f input,.f select{width:100%;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#fff;font-size:16px}
-      .seg{display:flex;gap:8px;justify-content:center}
-      .seg button{flex:1;padding:10px;border-radius:8px;border:1px solid #22324d;background:#0c121f;color:#d7e6ff;cursor:pointer;text-align:center}
-      .seg button[aria-pressed="true"]{background:#1a2742}
       .mini{font-size:12px;color:var(--muted)}
       .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 0 70px}
       .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column}
@@ -113,9 +124,14 @@ const citiesJson = cities.map(c => ({
       .foot{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
       .sum{font-size:13px;color:var(--muted)}
       .cost-tooltip{visibility:hidden;opacity:0;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:8px;padding:10px 12px;background:#1a2742;border:1px solid #2a3654;border-radius:6px;font-size:11px;color:var(--text);white-space:nowrap;z-index:100;transition:opacity .2s,visibility .2s;box-shadow:0 4px 12px rgba(0,0,0,.3);line-height:1.5}
-      @media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}.f{grid-column:span 6}}
+      @media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}}
       @media(max-width:680px){
-        .grid{grid-template-columns:repeat(2,1fr)}.f{grid-column:span 12}
+        .grid{grid-template-columns:repeat(2,1fr)}
+        .toolbar-top{flex-wrap:wrap}
+        .toolbar-search{max-width:100%;order:3;width:100%}
+        .panel-row{flex-direction:column}
+        .panel-group-income input{width:100%}
+        .seg button{padding:8px 10px;font-size:12px}
         .body{padding:10px}.title h3{font-size:14px}.title .mini{display:none}
         .card>.body>.rows{grid-template-columns:1fr;gap:8px;margin-top:8px}
         .card>.body>.rows .row:nth-child(2){display:none}
@@ -136,58 +152,73 @@ const citiesJson = cities.map(c => ({
   </section>
 
   <section>
-    <div class="controls wrap" role="region" aria-label="Controls">
-      <div class="f" style="grid-column:span 6">
-        <label for="income">Your monthly income (USD)</label>
-        <input id="income" type="number" min="0" step="50" value="3000" />
-      </div>
-      <div class="f" style="grid-column:span 6">
-        <label>Household size</label>
-        <div class="seg" role="group" aria-label="Household">
-          <button id="btnSingle" aria-pressed="true">One</button>
-          <button id="btnTwo" aria-pressed="false">Two</button>
-          <button id="btnFamily" aria-pressed="false">Family</button>
+    <div class="toolbar">
+      <div class="toolbar-top">
+        <div class="toolbar-search">
+          <input id="search" type="search" placeholder="Search cities or countries…" />
+        </div>
+        <div class="toolbar-right">
+          <div class="toolbar-sort">
+            <select id="sort">
+              <option value="editorChoice">Editor's Choice</option>
+              <option value="withinBudget">Within my budget</option>
+              <option value="costAsc">Lowest total cost</option>
+              <option value="costDesc">Highest total cost</option>
+            </select>
+          </div>
+          <button class="filter-toggle" id="filterToggleBottom" type="button" aria-expanded="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            Filters
+          </button>
         </div>
       </div>
-      <div class="f" style="grid-column:span 6">
-        <label>Apartment size</label>
-        <div class="seg" role="group" aria-label="Bedrooms">
-          <button id="btn1BR" aria-pressed="true">1BR</button>
-          <button id="btn2BR" aria-pressed="false">2BR</button>
-          <button id="btn3BR" aria-pressed="false">3BR</button>
+    </div>
+
+    <div class="panel" id="filterPanel">
+      <div class="panel-inner">
+        <div class="panel-row">
+          <div class="panel-group">
+            <div class="panel-group-label">Monthly income (USD)</div>
+            <div class="panel-group-income">
+              <input id="income" type="number" min="0" step="50" value="3000" />
+            </div>
+          </div>
+          <div class="panel-group">
+            <div class="panel-group-label">Household</div>
+            <div class="seg" role="group" aria-label="Household">
+              <button id="btnSingle" aria-pressed="true">One</button>
+              <button id="btnTwo" aria-pressed="false">Two</button>
+              <button id="btnFamily" aria-pressed="false">Family</button>
+            </div>
+          </div>
+          <div class="panel-group">
+            <div class="panel-group-label">Bedrooms</div>
+            <div class="seg" role="group" aria-label="Bedrooms">
+              <button id="btn1BR" aria-pressed="true">1 BR</button>
+              <button id="btn2BR" aria-pressed="false">2 BR</button>
+              <button id="btn3BR" aria-pressed="false">3 BR</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="f" style="grid-column:span 8">
-        <label for="search">Search</label>
-        <input id="search" type="search" placeholder="Search cities or countries…" />
-      </div>
-      <div class="f" style="grid-column:span 4">
-        <label for="sort">Sort</label>
-        <select id="sort">
-          <option value="editorChoice">Editor's Choice</option>
-          <option value="withinBudget">Within my budget</option>
-          <option value="costAsc">Lowest total cost</option>
-          <option value="costDesc">Highest total cost</option>
-        </select>
+        <div class="panel-row">
+          <div class="panel-group" style="flex:1">
+            <div class="panel-group-label">Region</div>
+            <div class="region-bar" id="regionBar">
+              <button class="region-pill all-btn" aria-pressed="true" data-region="all">All</button>
+              <button class="region-pill" aria-pressed="false" data-region="Africa">Africa</button>
+              <button class="region-pill" aria-pressed="false" data-region="Asia">Asia</button>
+              <button class="region-pill" aria-pressed="false" data-region="Europe">Europe</button>
+              <button class="region-pill" aria-pressed="false" data-region="Europe/Asia">Europe / Asia</button>
+              <button class="region-pill" aria-pressed="false" data-region="Middle East">Middle East</button>
+              <button class="region-pill" aria-pressed="false" data-region="North America">N. America</button>
+              <button class="region-pill" aria-pressed="false" data-region="Oceania">Oceania</button>
+              <button class="region-pill" aria-pressed="false" data-region="South America">S. America</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
-
-  <div class="filter-bar wrap">
-    <button class="filter-toggle filter-toggle-bottom" id="filterToggleBottom" type="button" aria-expanded="true">Hide filters</button>
-  </div>
-
-  <div class="region-bar" id="regionBar">
-    <button class="region-pill all-btn" aria-pressed="true" data-region="all">All regions</button>
-    <button class="region-pill" aria-pressed="false" data-region="Africa">Africa</button>
-    <button class="region-pill" aria-pressed="false" data-region="Asia">Asia</button>
-    <button class="region-pill" aria-pressed="false" data-region="Europe">Europe</button>
-    <button class="region-pill" aria-pressed="false" data-region="Europe/Asia">Europe/Asia</button>
-    <button class="region-pill" aria-pressed="false" data-region="Middle East">Middle East</button>
-    <button class="region-pill" aria-pressed="false" data-region="North America">N. America</button>
-    <button class="region-pill" aria-pressed="false" data-region="Oceania">Oceania</button>
-    <button class="region-pill" aria-pressed="false" data-region="South America">S. America</button>
-  </div>
 
   <main class="wrap" id="app" aria-live="polite"></main>
   <aside id="cityOverlay" class="overlay" aria-hidden="true"></aside>
@@ -621,12 +652,11 @@ const citiesJson = cities.map(c => ({
 
     overlayEl.addEventListener('click',e=>{if(e.target===overlayEl) closeCityDetail();});
 
-    // Filter toggles
-    const controlsEl=document.querySelector('.controls');
+    // Filter toggle
+    const filterPanel=document.getElementById('filterPanel');
     const filterBtn=document.getElementById('filterToggleBottom');
     filterBtn.addEventListener('click',()=>{
-      const hidden=controlsEl.classList.toggle('is-hidden');
-      filterBtn.textContent=hidden?'Show filters':'Hide filters';
+      const hidden=filterPanel.classList.toggle('is-hidden');
       filterBtn.setAttribute('aria-expanded',String(!hidden));
     });
 
