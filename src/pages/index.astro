@@ -131,29 +131,27 @@ const citiesJson = cities.map(c => ({
 
   <section>
     <div class="controls wrap" role="region" aria-label="Controls">
-      <div class="f" style="grid-column:span 4">
+      <div class="f" style="grid-column:span 3">
         <label for="income">Your monthly income (USD)</label>
         <input id="income" type="number" min="0" step="50" value="3000" />
       </div>
-      <div class="f" style="grid-column:span 4">
+      <div class="f" style="grid-column:span 3">
         <label>Household size</label>
         <div class="seg" role="group" aria-label="Household">
           <button id="btnSingle" aria-pressed="true">One</button>
           <button id="btnTwo" aria-pressed="false">Two</button>
+          <button id="btnFamily" aria-pressed="false">Family</button>
         </div>
       </div>
-      <div class="f" style="grid-column:span 4">
+      <div class="f" style="grid-column:span 3">
         <label>Apartment size</label>
         <div class="seg" role="group" aria-label="Bedrooms">
           <button id="btn1BR" aria-pressed="true">1BR</button>
           <button id="btn2BR" aria-pressed="false">2BR</button>
+          <button id="btn3BR" aria-pressed="false">3BR</button>
         </div>
       </div>
-      <div class="f" style="grid-column:span 8">
-        <label for="search">Search</label>
-        <input id="search" type="search" placeholder="Search cities or countries…" />
-      </div>
-      <div class="f" style="grid-column:span 4">
+      <div class="f" style="grid-column:span 3">
         <label for="sort">Sort</label>
         <select id="sort">
           <option value="editorChoice">Editor's Choice</option>
@@ -162,7 +160,11 @@ const citiesJson = cities.map(c => ({
           <option value="costDesc">Highest total cost</option>
         </select>
       </div>
-      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;">
+      <div class="f" style="grid-column:span 8">
+        <label for="search">Search</label>
+        <input id="search" type="search" placeholder="Search cities or countries…" />
+      </div>
+      <div style="grid-column:span 4;display:flex;align-items:end;">
         <button class="filter-toggle filter-toggle-bottom" id="filterToggleBottom" type="button" aria-expanded="true">Hide filters</button>
       </div>
     </div>
@@ -210,11 +212,35 @@ const citiesJson = cities.map(c => ({
     let bedrooms = "1";
     let LAST_ROWS = [];
 
-    function currentRent(c){ return bedrooms==="1" ? c.rent1BR : c.rent2BR; }
+    function currentRent(c){
+      if(bedrooms==="1") return c.rent1BR;
+      if(bedrooms==="2") return c.rent2BR;
+      return c.rent3BR;
+    }
+
+    function getMultiplier(){
+      if(household==="single") return 1.0;
+      if(household==="two") return 1.7;
+      return 2.5; // family
+    }
+
     function currentCost(c){
-      const baseTotal = (household==="single") ? c.costOne : c.costTwo;
-      const baselineRent = (household==="single") ? c.rent1BR : c.rent2BR;
-      return baseTotal - baselineRent + currentRent(c);
+      var mult = getMultiplier();
+      var rent = currentRent(c);
+      var variable = (c.food + c.utilities + c.transit + c.other) * mult;
+      return rent + variable;
+    }
+
+    function householdLabel(){
+      if(household==="single") return "single";
+      if(household==="two") return "couple";
+      return "family";
+    }
+
+    function bedroomLabel(){
+      if(bedrooms==="1") return "1-bedroom rent";
+      if(bedrooms==="2") return "2-bedroom rent";
+      return "3-bedroom rent";
     }
 
     function computeRows(){
@@ -287,7 +313,7 @@ const citiesJson = cities.map(c => ({
 
     function breakdownHTML(c){
       const total=c._cost, rent=c._rent;
-      const mult = household==="single" ? 1.0 : 1.7;
+      const mult = getMultiplier();
       const hasRealData = c.food > 0 || c.utilities > 0 || c.transit > 0 || c.other > 0;
       let food, util, tran, other;
       if (hasRealData) {
@@ -308,12 +334,12 @@ const citiesJson = cities.map(c => ({
         <div class="break-section">
           <div class="break-heading">Monthly breakdown</div>
           <div class="primary-total">
-            <div class="k">${household==="single"?"Total monthly cost (single)":"Total monthly cost (two)"}</div>
+            <div class="k">Total monthly cost (${householdLabel()})</div>
             <div class="v">${money(total)}/mo</div>
             ${pctLabel?`<div class="sub">${pctLabel}</div>`:''}
           </div>
           <ul class="break-list">
-            <li class="break-item"><span class="break-item-label">${bedrooms==="1"?"1-bedroom rent":"2-bedroom rent"}</span><span class="break-item-value">${money(rent)}/mo</span></li>
+            <li class="break-item"><span class="break-item-label">${bedroomLabel()}</span><span class="break-item-value">${money(rent)}/mo</span></li>
             <li class="break-item"><span class="break-item-label">Food</span><span class="break-item-value">${money(food)}/mo</span></li>
             <li class="break-item"><span class="break-item-label">Utilities</span><span class="break-item-value">${money(util)}/mo</span></li>
             <li class="break-item"><span class="break-item-label">Transit</span><span class="break-item-value">${money(tran)}/mo</span></li>
@@ -341,8 +367,8 @@ const citiesJson = cities.map(c => ({
         <div class="body">
           <div class="title"><h3>${c.city}, ${c.country}</h3><span class="mini">${c.region}</span></div>
           <div class="rows">
-            <div class="row"><div class="k">${household==="single"?"Monthly cost (single)":"Monthly cost (two)"}</div><div class="v">${money(c._cost)}/mo</div></div>
-            <div class="row"><div class="k">${bedrooms==="1"?"1-bedroom rent":"2-bedroom rent"}</div><div class="v">${money(c._rent)}/mo</div></div>
+            <div class="row"><div class="k">Monthly cost (${householdLabel()})</div><div class="v">${money(c._cost)}/mo</div></div>
+            <div class="row"><div class="k">${bedroomLabel()}</div><div class="v">${money(c._rent)}/mo</div></div>
           </div>
         </div>`;
       lazyLoadImage(article, c.city, c.country);
@@ -381,9 +407,9 @@ const citiesJson = cities.map(c => ({
       const top=(c._pct!=null)?`${Math.round(c._pct)}% of income`:`Cost: ${money(c._cost)}/mo`;
       el.querySelector('.chip').textContent=top;
       const rows=el.querySelectorAll('.row');
-      rows[0].querySelector('.k').textContent=household==="single"?"Monthly cost (single)":"Monthly cost (two)";
+      rows[0].querySelector('.k').textContent=`Monthly cost (${householdLabel()})`;
       rows[0].querySelector('.v').textContent=`${money(c._cost)}/mo`;
-      rows[1].querySelector('.k').textContent=bedrooms==="1"?"1-bedroom rent":"2-bedroom rent";
+      rows[1].querySelector('.k').textContent=bedroomLabel();
       rows[1].querySelector('.v').textContent=`${money(c._rent)}/mo`;
     }
 
@@ -513,10 +539,57 @@ const citiesJson = cities.map(c => ({
       el.addEventListener("change",render);
     });
 
-    $("#btnSingle").addEventListener("click",()=>{household="single";$("#btnSingle").setAttribute("aria-pressed","true");$("#btnTwo").setAttribute("aria-pressed","false");render();});
-    $("#btnTwo").addEventListener("click",()=>{household="two";$("#btnSingle").setAttribute("aria-pressed","false");$("#btnTwo").setAttribute("aria-pressed","true");render();});
-    $("#btn1BR").addEventListener("click",()=>{bedrooms="1";$("#btn1BR").setAttribute("aria-pressed","true");$("#btn2BR").setAttribute("aria-pressed","false");render();});
-    $("#btn2BR").addEventListener("click",()=>{bedrooms="2";$("#btn1BR").setAttribute("aria-pressed","false");$("#btn2BR").setAttribute("aria-pressed","true");render();});
+    // Household buttons: Single / Two / Family
+    $("#btnSingle").addEventListener("click",()=>{
+      household="single";
+      $("#btnSingle").setAttribute("aria-pressed","true");
+      $("#btnTwo").setAttribute("aria-pressed","false");
+      $("#btnFamily").setAttribute("aria-pressed","false");
+      CITY_ELEMENTS.clear();
+      render();
+    });
+    $("#btnTwo").addEventListener("click",()=>{
+      household="two";
+      $("#btnSingle").setAttribute("aria-pressed","false");
+      $("#btnTwo").setAttribute("aria-pressed","true");
+      $("#btnFamily").setAttribute("aria-pressed","false");
+      CITY_ELEMENTS.clear();
+      render();
+    });
+    $("#btnFamily").addEventListener("click",()=>{
+      household="family";
+      $("#btnSingle").setAttribute("aria-pressed","false");
+      $("#btnTwo").setAttribute("aria-pressed","false");
+      $("#btnFamily").setAttribute("aria-pressed","true");
+      CITY_ELEMENTS.clear();
+      render();
+    });
+
+    // Bedroom buttons: 1BR / 2BR / 3BR
+    $("#btn1BR").addEventListener("click",()=>{
+      bedrooms="1";
+      $("#btn1BR").setAttribute("aria-pressed","true");
+      $("#btn2BR").setAttribute("aria-pressed","false");
+      $("#btn3BR").setAttribute("aria-pressed","false");
+      CITY_ELEMENTS.clear();
+      render();
+    });
+    $("#btn2BR").addEventListener("click",()=>{
+      bedrooms="2";
+      $("#btn1BR").setAttribute("aria-pressed","false");
+      $("#btn2BR").setAttribute("aria-pressed","true");
+      $("#btn3BR").setAttribute("aria-pressed","false");
+      CITY_ELEMENTS.clear();
+      render();
+    });
+    $("#btn3BR").addEventListener("click",()=>{
+      bedrooms="3";
+      $("#btn1BR").setAttribute("aria-pressed","false");
+      $("#btn2BR").setAttribute("aria-pressed","false");
+      $("#btn3BR").setAttribute("aria-pressed","true");
+      CITY_ELEMENTS.clear();
+      render();
+    });
 
     document.addEventListener("keydown",e=>{
       if(e.key==="Enter"){const c=document.activeElement.closest?.(".card");if(c){e.preventDefault();openCityDetail(c.dataset.id);}}
@@ -538,6 +611,17 @@ const citiesJson = cities.map(c => ({
     // Resize handler
     let resizeTimer;
     window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(render,250);});
+
+    // ===== BACK BUTTON FIX =====
+    // When user navigates to a city page and hits back, the browser restores
+    // the cached page (bfcache) but the JS-rendered cards are gone.
+    // This re-renders them.
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        CITY_ELEMENTS.clear();
+        render();
+      }
+    });
 
     // INIT: render cards immediately, images lazy-load as you scroll
     CITIES = window.__MVE_CITIES || [];
