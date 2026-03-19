@@ -35,7 +35,14 @@ const schemaData = {
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(schemaData)} />
     <style>
-      .city-hero { padding:40px 16px 32px; text-align:center; }
+      .city-hero-img { position:relative; width:100%; max-height:400px; overflow:hidden; background:#0e1526; }
+      .city-hero-img img { width:100%; height:100%; object-fit:cover; display:block; max-height:400px; opacity:0; transition:opacity .4s; }
+      .city-hero-img img.loaded { opacity:1; }
+      .city-hero-img .shimmer { position:absolute; inset:0; background:linear-gradient(90deg,#0e1526 25%,#1a2540 50%,#0e1526 75%); background-size:800px 100%; animation:shimmer 1.5s infinite linear; }
+      @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+      .city-hero-img .fallback-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#2a3654; font-size:18px; }
+
+      .city-hero { padding:32px 16px 24px; text-align:center; }
       .city-hero h1 { font-size:clamp(28px,5vw,44px); margin:0 0 8px; font-weight:800; }
       .city-hero .region { font-size:16px; color:var(--muted); }
 
@@ -83,12 +90,19 @@ const schemaData = {
         .cost-total .amount { font-size:28px; }
         .links-grid { grid-template-columns:1fr; }
         .seg-btn { padding:8px 12px; font-size:13px; }
+        .city-hero-img { max-height:250px; }
+        .city-hero-img img { max-height:250px; }
       }
     </style>
   </Fragment>
 
   <main class="wrap">
     <a href="/" class="back-link">&larr; All cities</a>
+
+    <div class="city-hero-img" id="heroImg">
+      <div class="shimmer" id="heroShimmer"></div>
+      <img id="heroPhoto" alt={`${city.city}, ${city.country}`} src="" />
+    </div>
 
     <div class="city-hero">
       <h1>{city.city}, {city.country}</h1>
@@ -175,7 +189,7 @@ const schemaData = {
     </div>
   </main>
 
-  <script define:vars={{ costs: city.costs }}>
+  <script define:vars={{ costs: city.costs, cityName: city.city, countryName: city.country }}>
     const money = (x) => `$${Math.round(x).toLocaleString()}`;
     let household = 'single';
     let bedrooms = '1BR';
@@ -206,5 +220,40 @@ const schemaData = {
         });
       });
     });
+
+    // Load Wikipedia hero image
+    async function loadHeroImage() {
+      const imgEl = document.getElementById('heroPhoto');
+      const shimmer = document.getElementById('heroShimmer');
+
+      async function tryWiki(title) {
+        try {
+          const url = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original|thumbnail&pithumbsize=1280&titles=${encodeURIComponent(title)}&origin=*`;
+          const r = await fetch(url);
+          if (!r.ok) return null;
+          const j = await r.json();
+          const pages = j?.query?.pages || {};
+          const first = Object.values(pages)[0];
+          if (!first) return null;
+          return first.original?.source || first.thumbnail?.source || null;
+        } catch(e) { return null; }
+      }
+
+      let src = await tryWiki(cityName + ', ' + countryName);
+      if (!src) src = await tryWiki(cityName);
+
+      if (src) {
+        imgEl.src = src;
+        imgEl.onload = function() {
+          imgEl.classList.add('loaded');
+          if (shimmer) shimmer.remove();
+        };
+      } else {
+        if (shimmer) shimmer.remove();
+        document.getElementById('heroImg').style.display = 'none';
+      }
+    }
+
+    loadHeroImage();
   </script>
 </Base>
