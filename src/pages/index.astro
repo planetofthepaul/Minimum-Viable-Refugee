@@ -76,15 +76,15 @@ const citiesJson = cities.map(c => ({
       @keyframes strongPulse{0%,100%{transform:scale(1);box-shadow:0 4px 12px rgba(0,0,0,.4)}50%{transform:scale(1.08);box-shadow:0 6px 20px rgba(255,149,0,.6)}}
       .overlay{position:fixed;inset:0;background:rgba(5,8,15,.96);backdrop-filter:blur(10px);z-index:40;display:none;overflow-y:auto;padding:16px}
       .overlay.open{display:block}
-      .overlay-inner{max-width:900px;margin:0 auto;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+      .overlay-inner{max-width:900px;margin:40px auto;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
       .overlay-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(11,14,19,.92)}
       .overlay-header-left{display:flex;align-items:center;gap:10px}
       .overlay-close{border:none;background:#151b29;color:var(--muted);width:30px;height:30px;border-radius:999px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
       .overlay-close:hover{background:#1f283a;color:var(--text)}
       .overlay-city{font-size:22px;font-weight:700}
       .overlay-region{margin-top:2px}
-      .overlay-media{position:relative;aspect-ratio:16/6;background:#0e1526}
-      .overlay-media img{width:100%;height:100%;object-fit:cover;display:block}
+      .overlay-media{position:relative;max-height:300px;background:#0e1526;overflow:hidden}
+      .overlay-media img{width:100%;height:100%;object-fit:cover;display:block;max-height:300px}
       .overlay-body{padding:16px 18px 18px}
       .break-heading{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
       .break-section{margin-top:4px}
@@ -519,6 +519,7 @@ const citiesJson = cities.map(c => ({
           </div>
         </div>`;
       overlayEl.classList.add('open');
+      overlayEl.scrollTop=0;
       overlayEl.setAttribute('aria-hidden','false');
       document.body.style.overflow='hidden';
       overlayEl.querySelector('[data-close]').addEventListener('click',closeCityDetail);
